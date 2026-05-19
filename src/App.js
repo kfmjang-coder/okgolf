@@ -2174,7 +2174,7 @@ function AdminTimeline({ coaches, adminPw, showToast }) {
 function AdminScreen({ coaches, setCoaches, showToast, onLogin }) {
   const [pw, setPw]             = useState("");
   const [adminPw, setAdminPw]   = useState("");
-  const [adminTab, setAdminTab] = useState(() => window.innerWidth >= 768 ? "timeline" : "dash");
+  const [adminTab, setAdminTab] = useState("dash"); // 항상 dash로 시작
   const [stats, setStats]       = useState(null);
   const [statsLoading, setStatsLoading] = useState(false);
   const [attend, setAttend]     = useState([]);
@@ -2221,7 +2221,8 @@ function AdminScreen({ coaches, setCoaches, showToast, onLogin }) {
 
   // PC 전환 시 자동으로 타임라인 탭
   useEffect(() => {
-    if (isPC && adminPw && adminTab === "dash") setAdminTab("timeline");
+    if (isPC && adminPw) setAdminTab("timeline");   // PC 감지 시 타임라인으로
+    if (!isPC && adminTab === "timeline") setAdminTab("dash"); // 모바일 감지 시 현황으로
   }, [isPC]);
 
   const handleLogin = async () => {
@@ -2233,7 +2234,7 @@ function AdminScreen({ coaches, setCoaches, showToast, onLogin }) {
       setAdminPw(pw);
       setStats(s);
       setStatsLoading(false);
-      setAdminTab(window.innerWidth >= 768 ? "timeline" : "dash");
+      setAdminTab(window.innerWidth >= 768 ? "timeline" : "dash"); // PC면 타임라인, 모바일이면 현황
       if (onLogin) onLogin(pw); // 전역 adminPw 공유 (게시판 공지사항 작성용)
     } catch (e) {
       setStatsLoading(false);
