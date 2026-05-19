@@ -35,13 +35,13 @@ async function compressImage(file) {
       const img = new Image();
       img.onload = () => {
         const canvas = document.createElement("canvas");
-        const max = 800;
+        const max = 600;  // 800 → 600px (크기 축소)
         let w = img.width, h = img.height;
-        if (w > max) { h = (h * max) / w; w = max; }
-        if (h > max) { w = (w * max) / h; h = max; }
+        if (w > max) { h = Math.round(h * max / w); w = max; }
+        if (h > max) { w = Math.round(w * max / h); h = max; }
         canvas.width = w; canvas.height = h;
         canvas.getContext("2d").drawImage(img, 0, 0, w, h);
-        resolve(canvas.toDataURL("image/jpeg", 0.7));
+        resolve(canvas.toDataURL("image/jpeg", 0.6));  // 품질 0.7 → 0.6
       };
       img.src = e.target.result;
     };
@@ -1677,8 +1677,18 @@ function WriteForm({ coaches, adminPw, onSubmit, onCancel }) {
   const [inputPw, setInputPw]   = useState(""); // 공지사항 작성 시 비밀번호
 
   const handleFile = async e => {
-    const fs = Array.from(e.target.files).slice(0, 3);
-    const processed = await Promise.all(fs.map(async f => {
+    const selected = Array.from(e.target.files).slice(0, 3);
+    // 이미지 5MB, 기타 파일 1MB 제한
+    const valid = selected.filter(f => {
+      const limit = isImage(f.name) ? 5 * 1024 * 1024 : 1 * 1024 * 1024;
+      if (f.size > limit) {
+        alert(`${f.name}: ${isImage(f.name) ? "이미지는 5MB" : "파일은 1MB"} 이하만 첨부 가능합니다.`);
+        return false;
+      }
+      return true;
+    });
+    if (!valid.length) return;
+    const processed = await Promise.all(valid.map(async f => {
       const data = isImage(f.name) ? await compressImage(f) : await fileToBase64(f);
       return { name: f.name, type: f.type, size: f.size, data };
     }));
