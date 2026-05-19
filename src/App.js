@@ -2783,18 +2783,35 @@ function AdminAttendTab({ list, adminPw, showToast, onDone }) {
 
 function AdminProTab({ list, adminPw, showToast, onDone, setCoaches }) {
   const [showForm, setShowForm] = useState(false);
-  const [editPro, setEditPro]   = useState(null);  // 수정 중인 프로
+  const [editPro, setEditPro]   = useState(null);
+  const [allLessons, setAllLessons] = useState([]); // DB 레슨 종류 목록
   const [form, setForm]         = useState({
     name: "", title: "대표 프로", intro: "", icon: "🏌️",
     color: "#34d399", profileImg: "",
     startHour: 9, endHour: 22,
+    lessonTypes: [], // 담당 레슨 종류 (레슨명 배열)
   });
   const [imgPreview, setImgPreview] = useState("");
   const [saving, setSaving]         = useState(false);
 
+  // 레슨 종류 목록 로드
+  useEffect(() => {
+    apiGet({ action:"getLessons" }).then(d => setAllLessons(d||[])).catch(()=>{});
+  }, []);
+
+  // 레슨 선택 토글
+  const toggleLesson = (lessonName) => {
+    setForm(p => ({
+      ...p,
+      lessonTypes: p.lessonTypes.includes(lessonName)
+        ? p.lessonTypes.filter(t => t !== lessonName)
+        : [...p.lessonTypes, lessonName],
+    }));
+  };
+
   // 폼 초기화
   const resetForm = () => {
-    setForm({ name: "", title: "대표 프로", intro: "", icon: "🏌️", color: "#34d399", profileImg: "", startHour: 9, endHour: 22 });
+    setForm({ name: "", title: "대표 프로", intro: "", icon: "🏌️", color: "#34d399", profileImg: "", startHour: 9, endHour: 22, lessonTypes: [] });
     setImgPreview(""); setEditPro(null); setShowForm(false);
   };
 
@@ -2827,6 +2844,7 @@ function AdminProTab({ list, adminPw, showToast, onDone, setCoaches }) {
       color: pro.color || "#34d399", profileImg: pro.image || "",
       startHour: pro.startHour || 9,
       endHour:   pro.endHour   || 22,
+      lessonTypes: pro.lessonTypes || [],
     });
     setImgPreview(pro.image || "");
     setShowForm(true);
@@ -2844,6 +2862,7 @@ function AdminProTab({ list, adminPw, showToast, onDone, setCoaches }) {
           ...form, profileImg: form.profileImg,
           startHour: form.startHour,
           endHour:   form.endHour,
+          lessonTypes: JSON.stringify(form.lessonTypes),
           password: adminPw,
         });
         showToast("✅ 프로 정보가 수정되었습니다.");
@@ -2851,7 +2870,11 @@ function AdminProTab({ list, adminPw, showToast, onDone, setCoaches }) {
         // 신규 등록
         await apiPost({
           action: "createCoach", ...form,
-          lessonTypes: JSON.stringify(["개인30분", "개인1시간"]),
+          lessonTypes: JSON.stringify(
+            form.lessonTypes.length > 0
+              ? form.lessonTypes
+              : allLessons.map(l => l["레슨명"]) // 선택 안 하면 전체 배정
+          ),
           password: adminPw,
         });
         showToast("✅ 프로가 등록되었습니다.");
@@ -2987,6 +3010,43 @@ function AdminProTab({ list, adminPw, showToast, onDone, setCoaches }) {
             </div>
           </div>
 
+          {/* 담당 레슨 종류 선택 */}
+          <div style={{ marginBottom: 12 }}>
+            <div style={{ fontSize: 10, fontWeight: 700, color: "#4b5675", marginBottom: 4, letterSpacing:.5 }}>
+              📚 담당 레슨 종류 <span style={{ color:"#2d3347", fontWeight:400 }}>(미선택 시 전체 담당)</span>
+            </div>
+            {allLessons.length === 0 ? (
+              <div style={{ fontSize:10, color:"#4b5675" }}>레슨 종류를 먼저 등록해주세요.</div>
+            ) : (
+              <div style={{ display:"flex", flexWrap:"wrap", gap:5 }}>
+                {allLessons.map(l => {
+                  const isSel = form.lessonTypes.includes(l["레슨명"]);
+                  const color = l["색상"] || "#34d399";
+                  return (
+                    <button key={l["레슨ID"]} type="button"
+                      onClick={() => toggleLesson(l["레슨명"])}
+                      style={{
+                        padding:"5px 10px", borderRadius:6, fontSize:11, cursor:"pointer",
+                        fontWeight: isSel ? 700 : 400,
+                        background: isSel ? color : "#1a1e28",
+                        color: isSel ? "#000" : "#94a3b8",
+                        border: isSel ? "none" : `1px solid ${color}44`,
+                        transition:"all .12s",
+                      }}>
+                      {isSel ? "✓ " : ""}{l["레슨명"]}
+                      <span style={{ fontSize:8, opacity:.7, marginLeft:3 }}>{l["소요시간(분)"]}분</span>
+                    </button>
+                  );
+                })}
+              </div>
+            )}
+            {form.lessonTypes.length > 0 && (
+              <div style={{ fontSize:9, color:"#34d399", marginTop:5 }}>
+                ✓ {form.lessonTypes.join(" · ")} 담당
+              </div>
+            )}
+          </div>
+
           {/* 테마 색상 */}
           <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 10 }}>
             <div style={{ fontSize: 11, color: "#94a3b8" }}>테마 색상</div>
@@ -3029,6 +3089,11 @@ function AdminProTab({ list, adminPw, showToast, onDone, setCoaches }) {
             <div style={{ fontSize: 10, color: p.status === "active" ? "#94a3b8" : "#f87171" }}>
               {p.title} · {p.status === "active" ? "활성" : "비활성"}
             </div>
+            {(p.lessonTypes||[]).length > 0 && (
+              <div style={{ fontSize:9, color:"#4b5675", marginTop:2 }}>
+                {p.lessonTypes.slice(0,3).join(" · ")}{p.lessonTypes.length > 3 ? " ..." : ""}
+              </div>
+            )}
           </div>
           <div style={{ display: "flex", gap: 4 }}>
             {/* 수정 버튼 */}
