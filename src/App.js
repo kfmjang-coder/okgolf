@@ -72,10 +72,10 @@ function safeArr(val) {
 const INP = {
   width: "100%", background: "var(--inp-bg)", border: "1px solid var(--border)",
   borderRadius: 8, padding: "8px 10px", color: "var(--text)",
-  fontSize: 13, outline: "none", boxSizing: "border-box",
+  fontSize: 14, outline: "none", boxSizing: "border-box",
 };
 const LBL = {
-  fontSize: 10, fontWeight: 700, letterSpacing: 1.2,
+  fontSize: 11, fontWeight: 700, letterSpacing: 1.2,
   textTransform: "uppercase", color: "#4b5675", marginBottom: 6,
 };
 const CARD_STYLE = {
@@ -97,14 +97,14 @@ function Toast({ msg, onClose }) {
     <div style={{
       position: "fixed", bottom: 80, left: "50%", transform: "translateX(-50%)",
       background: "#1f2435", border: "1px solid #34d399", color: "var(--text)",
-      padding: "10px 20px", borderRadius: 10, zIndex: 9999, fontSize: 14,
+      padding: "10px 20px", borderRadius: 10, zIndex: 9999, fontSize: 15,
       boxShadow: "0 4px 20px rgba(0,0,0,.5)", maxWidth: 300, textAlign: "center",
     }}>{msg}</div>
   );
 }
 
 function Spinner() {
-  return <div style={{ textAlign: "center", padding: 40, color: "#94a3b8", fontSize: 14 }}>⏳ 로딩중...</div>;
+  return <div style={{ textAlign: "center", padding: 40, color: "#94a3b8", fontSize: 15 }}>⏳ 로딩중...</div>;
 }
 
 function Btn({ onClick, children, variant = "primary", style = {}, disabled = false }) {
@@ -117,7 +117,7 @@ function Btn({ onClick, children, variant = "primary", style = {}, disabled = fa
   return (
     <button onClick={disabled ? undefined : onClick} style={{
       border: "none", borderRadius: 8, padding: "10px 0", width: "100%",
-      fontWeight: 700, fontSize: 14, cursor: disabled ? "not-allowed" : "pointer",
+      fontWeight: 700, fontSize: 15, cursor: disabled ? "not-allowed" : "pointer",
       opacity: disabled ? 0.5 : 1, ...variants[variant], ...style,
     }}>{children}</button>
   );
@@ -141,7 +141,7 @@ function ProCard({ pro, selected, onClick, onDetail }) {
           width: 54, height: 54, borderRadius: "50%",
           background: "#1f2435", border: `2px solid ${selected ? color : "#2d3347"}`,
           display: "flex", alignItems: "center", justifyContent: "center",
-          fontSize: 25, flexShrink: 0, overflow: "hidden",
+          fontSize: 26, flexShrink: 0, overflow: "hidden",
         }}>
           {pro.image
             ? <img src={pro.image} alt={pro.name} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
@@ -149,29 +149,29 @@ function ProCard({ pro, selected, onClick, onDetail }) {
         </div>
         <div style={{ flex: 1 }}>
           <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 3 }}>
-            <span style={{ fontSize: 14, fontWeight: 900 }}>{pro.name}</span>
+            <span style={{ fontSize: 15, fontWeight: 900 }}>{pro.name}</span>
             <span style={{
-              fontSize: 10, padding: "1px 6px", borderRadius: 3, fontWeight: 700,
+              fontSize: 11, padding: "1px 6px", borderRadius: 3, fontWeight: 700,
               background: color + "22", color, border: `1px solid ${color}44`,
             }}>{pro.title}</span>
           </div>
           {pro.avgRating && (
-            <div style={{ fontSize: 12, color: "#fbbf24", marginBottom: 3 }}>
+            <div style={{ fontSize: 13, color: "#fbbf24", marginBottom: 3 }}>
               ⭐ {pro.avgRating} <span style={{ color: "#4b5675" }}>({pro.reviewCount})</span>
             </div>
           )}
           <div style={{ marginBottom: 4 }}>
             {types.slice(0, 4).map((t, i) => (
               <span key={i} style={{
-                fontSize: 10, padding: "2px 6px", borderRadius: 3, fontWeight: 700,
+                fontSize: 11, padding: "2px 6px", borderRadius: 3, fontWeight: 700,
                 background: "#94a3b822", color: "#94a3b8", border: "1px solid #94a3b844",
                 marginRight: 3, marginBottom: 2, display: "inline-block",
               }}>{t}</span>
             ))}
           </div>
-          <div style={{ fontSize: 12, color: "#94a3b8", lineHeight: 1.4, marginBottom: 4 }}>{pro.intro}</div>
+          <div style={{ fontSize: 13, color: "#94a3b8", lineHeight: 1.4, marginBottom: 4 }}>{pro.intro}</div>
           {awards[0] && (
-            <div style={{ fontSize: 11, color: "#fbbf24" }}>
+            <div style={{ fontSize: 12, color: "#fbbf24" }}>
               🏆 {awards[0].title} {awards[0].rank} ({awards[0].year})
             </div>
           )}
@@ -179,7 +179,7 @@ function ProCard({ pro, selected, onClick, onDetail }) {
       </div>
       <div style={{ textAlign: "right", marginTop: 6 }}>
         <span onClick={e => { e.stopPropagation(); onDetail(pro); }}
-          style={{ fontSize: 12, color: "#34d399", cursor: "pointer" }}>
+          style={{ fontSize: 13, color: "#34d399", cursor: "pointer" }}>
           상세보기 →
         </span>
       </div>
@@ -211,22 +211,22 @@ function ProDetailModal({ pro, onClose, onSelect }) {
             width: 64, height: 64, borderRadius: "50%",
             background: "#1f2435", border: `2px solid ${pro.color || "#34d399"}`,
             display: "flex", alignItems: "center", justifyContent: "center",
-            fontSize: 29, overflow: "hidden",
+            fontSize: 30, overflow: "hidden",
           }}>
             {pro.image
               ? <img src={pro.image} alt={pro.name} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
               : pro.icon || "🏌️"}
           </div>
           <div>
-            <div style={{ fontSize: 17, fontWeight: 900 }}>{pro.name}</div>
-            <div style={{ fontSize: 12, color: pro.color || "#34d399", marginTop: 2 }}>{pro.title}</div>
-            {pro.avgRating && <div style={{ fontSize: 12, color: "#fbbf24", marginTop: 2 }}>⭐ {pro.avgRating}점</div>}
+            <div style={{ fontSize: 18, fontWeight: 900 }}>{pro.name}</div>
+            <div style={{ fontSize: 13, color: pro.color || "#34d399", marginTop: 2 }}>{pro.title}</div>
+            {pro.avgRating && <div style={{ fontSize: 13, color: "#fbbf24", marginTop: 2 }}>⭐ {pro.avgRating}점</div>}
           </div>
         </div>
         {pro.detail && (
           <div style={{ marginBottom: 12 }}>
             <div style={{ ...LBL, marginBottom: 5 }}>소개</div>
-            <div style={{ fontSize: 13, color: "#94a3b8", lineHeight: 1.7 }}>{pro.detail}</div>
+            <div style={{ fontSize: 14, color: "#94a3b8", lineHeight: 1.7 }}>{pro.detail}</div>
           </div>
         )}
         {career.length > 0 && (
@@ -234,8 +234,8 @@ function ProDetailModal({ pro, onClose, onSelect }) {
             <div style={{ ...LBL, marginBottom: 5 }}>경력</div>
             {career.map((c, i) => (
               <div key={i} style={{ borderLeft: `2px solid ${i === 0 ? "#34d399" : "#2d3347"}`, paddingLeft: 10, marginBottom: 6 }}>
-                <div style={{ fontSize: 11, color: "#fbbf24", fontFamily: "monospace" }}>{c.year}</div>
-                <div style={{ fontSize: 13, color: "#94a3b8" }}>{c.desc}</div>
+                <div style={{ fontSize: 12, color: "#fbbf24", fontFamily: "monospace" }}>{c.year}</div>
+                <div style={{ fontSize: 14, color: "#94a3b8" }}>{c.desc}</div>
               </div>
             ))}
           </div>
@@ -245,10 +245,10 @@ function ProDetailModal({ pro, onClose, onSelect }) {
             <div style={{ ...LBL, marginBottom: 5 }}>수상 이력</div>
             {awards.map((a, i) => (
               <div key={i} style={{ display: "flex", alignItems: "center", gap: 8, padding: "5px 0", borderBottom: "1px solid #1f2435" }}>
-                <span style={{ fontSize: 19 }}>{medals[i] || "🏅"}</span>
+                <span style={{ fontSize: 20 }}>{medals[i] || "🏅"}</span>
                 <div>
-                  <div style={{ fontSize: 13, fontWeight: 700 }}>{a.title}</div>
-                  <div style={{ fontSize: 11, color: "#4b5675" }}>{a.year} · {a.rank}</div>
+                  <div style={{ fontSize: 14, fontWeight: 700 }}>{a.title}</div>
+                  <div style={{ fontSize: 12, color: "#4b5675" }}>{a.year} · {a.rank}</div>
                 </div>
               </div>
             ))}
@@ -278,10 +278,10 @@ function HomeScreen({ coaches, selPro, setSelPro, setTab, setBookStep, setDetail
           border: "1px solid rgba(52,211,153,.28)", borderRadius: 12,
           padding: "10px 14px", display: "flex", alignItems: "center", gap: 10, marginBottom: 14, cursor: "pointer",
         }}>
-          <span style={{ fontSize: 19 }}>📢</span>
+          <span style={{ fontSize: 20 }}>📢</span>
           <div>
-            <div style={{ fontSize: 13, fontWeight: 700, marginBottom: 2 }}>📌 {pinned[0].제목}</div>
-            <div style={{ fontSize: 11, color: "#94a3b8" }}>{String(pinned[0].내용 || "").slice(0, 40)}...</div>
+            <div style={{ fontSize: 14, fontWeight: 700, marginBottom: 2 }}>📌 {pinned[0].제목}</div>
+            <div style={{ fontSize: 12, color: "#94a3b8" }}>{String(pinned[0].내용 || "").slice(0, 40)}...</div>
           </div>
         </div>
       )}
@@ -384,7 +384,7 @@ function BookScreen({ coaches, selPro, setSelPro, setDetailPro, showToast, setTa
       <div style={{ display: "flex", gap: 4, marginBottom: 16 }}>
         {STEP_LABELS.map((s, i) => (
           <div key={i} style={{
-            flex: 1, textAlign: "center", fontSize: 11, padding: "5px 0", borderRadius: 6,
+            flex: 1, textAlign: "center", fontSize: 12, padding: "5px 0", borderRadius: 6,
             fontWeight: step === i + 1 ? 700 : 400,
             background: step === i + 1 ? "#34d399" : step > i + 1 ? "rgba(52,211,153,.2)" : "#1a1e28",
             color: step === i + 1 ? "#000" : step > i + 1 ? "#34d399" : "#4b5675",
@@ -411,14 +411,14 @@ function BookScreen({ coaches, selPro, setSelPro, setDetailPro, showToast, setTa
               const isSel = lessonType === name;
               return (
                 <button key={l["레슨ID"]} onClick={() => setLessonType(name)} style={{
-                  padding: "6px 14px", borderRadius: 20, fontSize: 12, cursor: "pointer",
+                  padding: "6px 14px", borderRadius: 20, fontSize: 13, cursor: "pointer",
                   fontWeight: isSel ? 700 : 400,
                   background: isSel ? color : "#1a1e28",
                   color: isSel ? "#000" : "#94a3b8",
                   border: isSel ? "none" : `1px solid ${color}44`,
                 }}>
                   {name}
-                  {l["소요시간(분)"] && <span style={{ fontSize: 10, opacity:.7, marginLeft:4 }}>{l["소요시간(분)"]}분</span>}
+                  {l["소요시간(분)"] && <span style={{ fontSize: 11, opacity:.7, marginLeft:4 }}>{l["소요시간(분)"]}분</span>}
                 </button>
               );
             })}
@@ -432,13 +432,13 @@ function BookScreen({ coaches, selPro, setSelPro, setDetailPro, showToast, setTa
         <div>
           {/* 선택된 프로 요약 */}
           <div style={{ ...CARD_STYLE, display: "flex", gap: 10, alignItems: "center", marginBottom: 14 }}>
-            <span style={{ fontSize: 23 }}>{selPro?.icon}</span>
+            <span style={{ fontSize: 24 }}>{selPro?.icon}</span>
             <div style={{ flex: 1 }}>
-              <div style={{ fontSize: 14, fontWeight: 700 }}>{selPro?.name}</div>
-              <div style={{ fontSize: 11, color: "#94a3b8" }}>{lessonType}</div>
+              <div style={{ fontSize: 15, fontWeight: 700 }}>{selPro?.name}</div>
+              <div style={{ fontSize: 12, color: "#94a3b8" }}>{lessonType}</div>
             </div>
             <button onClick={() => { setStep(1); setSelDate(""); setSelSlot(""); setSlots([]); }}
-              style={{ fontSize: 11, color: "#34d399", background: "none", border: "none", cursor: "pointer" }}>
+              style={{ fontSize: 12, color: "#34d399", background: "none", border: "none", cursor: "pointer" }}>
               변경
             </button>
           </div>
@@ -453,18 +453,18 @@ function BookScreen({ coaches, selPro, setSelPro, setDetailPro, showToast, setTa
               return (
                 <div key={d} onClick={() => !isOff && setSelDate(d)} style={{
                   flexShrink: 0, width: 48, textAlign: "center", padding: "7px 0",
-                  borderRadius: 10, fontSize: 12, cursor: isOff ? "not-allowed" : "pointer",
+                  borderRadius: 10, fontSize: 13, cursor: isOff ? "not-allowed" : "pointer",
                   opacity: isOff ? 0.3 : 1, transition: "all .13s",
                   background: isSelected ? "#34d399" : "#1a1e28",
                   color: isSelected ? "#000" : "#e2e8f0",
                   border: isSelected ? "none" : `1px solid ${dow === 0 || dow === 6 ? "rgba(251,191,36,.3)" : "#2d3347"}`,
                   boxShadow: isSelected ? "0 2px 8px rgba(52,211,153,.35)" : "none",
                 }}>
-                  <div style={{ fontSize: 9, marginBottom: 2, color: isSelected ? "rgba(0,0,0,.55)" : (dow === 0 || dow === 6 ? "#fbbf24" : "#4b5675") }}>
+                  <div style={{ fontSize: 10, marginBottom: 2, color: isSelected ? "rgba(0,0,0,.55)" : (dow === 0 || dow === 6 ? "#fbbf24" : "#4b5675") }}>
                     {d.slice(5, 7)}/{d.slice(8, 10)}
                   </div>
-                  <div style={{ fontWeight: isSelected ? 900 : 500, fontSize: 14 }}>{DOW_KR[dow]}</div>
-                  {isOff && <div style={{ fontSize: 8, color: "#f87171", marginTop: 2 }}>휴무</div>}
+                  <div style={{ fontWeight: isSelected ? 900 : 500, fontSize: 15 }}>{DOW_KR[dow]}</div>
+                  {isOff && <div style={{ fontSize: 9, color: "#f87171", marginTop: 2 }}>휴무</div>}
                 </div>
               );
             })}
@@ -478,7 +478,7 @@ function BookScreen({ coaches, selPro, setSelPro, setDetailPro, showToast, setTa
                 <div style={{ ...LBL, marginBottom: 0 }}>
                   ⏰ {selDate.slice(5).replace("-", "/")} ({DOW_KR[new Date(selDate).getDay()]}) 시간 선택
                 </div>
-                <div style={{ display: "flex", gap: 8, fontSize: 9.5 }}>
+                <div style={{ display: "flex", gap: 8, fontSize: 10.5 }}>
                   <span style={{ display:"flex", alignItems:"center", gap:3 }}>
                     <span style={{ width:8, height:8, borderRadius:2, background:"#34d399", display:"inline-block" }}/>
                     <span style={{ color:"#34d399" }}>예약가능</span>
@@ -495,11 +495,11 @@ function BookScreen({ coaches, selPro, setSelPro, setDetailPro, showToast, setTa
               </div>
 
               {slotsLoading ? (
-                <div style={{ textAlign: "center", padding: "24px 0", color: "#94a3b8", fontSize: 13 }}>
+                <div style={{ textAlign: "center", padding: "24px 0", color: "#94a3b8", fontSize: 14 }}>
                   ⏳ 시간 불러오는 중...
                 </div>
               ) : slots.length === 0 ? (
-                <div style={{ textAlign: "center", padding: "20px 0", color: "#4b5675", fontSize: 13 }}>
+                <div style={{ textAlign: "center", padding: "20px 0", color: "#4b5675", fontSize: 14 }}>
                   이 날짜에 예약 가능한 시간이 없습니다.
                 </div>
               ) : (
@@ -538,7 +538,7 @@ function BookScreen({ coaches, selPro, setSelPro, setDetailPro, showToast, setTa
                           borderRadius: 9,
                           padding: "9px 4px 7px",
                           textAlign: "center",
-                          fontSize: 13,
+                          fontSize: 14,
                           fontWeight: isSelected ? 900 : isBooked ? 500 : 400,
                           cursor,
                           transition: "all .13s",
@@ -565,7 +565,7 @@ function BookScreen({ coaches, selPro, setSelPro, setDetailPro, showToast, setTa
                         )}
                         <div style={{ fontFamily: "monospace", letterSpacing: .5 }}>{label}</div>
                         <div style={{
-                          fontSize: 9,
+                          fontSize: 10,
                           marginTop: 3,
                           color: isSelected ? "rgba(0,0,0,.65)"
                                : isBooked   ? "#38bdf8"
@@ -589,15 +589,15 @@ function BookScreen({ coaches, selPro, setSelPro, setDetailPro, showToast, setTa
                   padding: "10px 14px", marginBottom: 12,
                   display: "flex", alignItems: "center", gap: 10,
                 }}>
-                  <span style={{ fontSize: 19 }}>✅</span>
+                  <span style={{ fontSize: 20 }}>✅</span>
                   <div>
-                    <div style={{ fontSize: 13, fontWeight: 700 }}>
+                    <div style={{ fontSize: 14, fontWeight: 700 }}>
                       {selDate.slice(5).replace("-", "/")} ({DOW_KR[new Date(selDate).getDay()]}) {selSlot}
                     </div>
-                    <div style={{ fontSize: 11, color: "#94a3b8" }}>{selPro?.name} · {lessonType}</div>
+                    <div style={{ fontSize: 12, color: "#94a3b8" }}>{selPro?.name} · {lessonType}</div>
                   </div>
                   <button onClick={() => setSelSlot("")}
-                    style={{ marginLeft: "auto", fontSize: 11, color: "#f87171", background: "none", border: "none", cursor: "pointer" }}>
+                    style={{ marginLeft: "auto", fontSize: 12, color: "#f87171", background: "none", border: "none", cursor: "pointer" }}>
                     ✕ 취소
                   </button>
                 </div>
@@ -606,7 +606,7 @@ function BookScreen({ coaches, selPro, setSelPro, setDetailPro, showToast, setTa
           ) : (
             <div style={{
               textAlign: "center", padding: "24px 0",
-              color: "#4b5675", fontSize: 13, lineHeight: 1.8,
+              color: "#4b5675", fontSize: 14, lineHeight: 1.8,
               border: "1px dashed #2d3347", borderRadius: 10,
             }}>
               📅 위에서 날짜를 선택하면<br />예약 가능한 시간이 표시됩니다
@@ -634,26 +634,26 @@ function BookScreen({ coaches, selPro, setSelPro, setDetailPro, showToast, setTa
             border: "1px solid rgba(52,211,153,.25)", borderRadius: 12,
             padding: "12px 14px", marginBottom: 14,
           }}>
-            <div style={{ fontSize: 12, color: "#34d399", fontWeight: 700, marginBottom: 6 }}>📋 예약 정보 확인</div>
+            <div style={{ fontSize: 13, color: "#34d399", fontWeight: 700, marginBottom: 6 }}>📋 예약 정보 확인</div>
             <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-              <div style={{ display: "flex", justifyContent: "space-between", fontSize: 13 }}>
+              <div style={{ display: "flex", justifyContent: "space-between", fontSize: 14 }}>
                 <span style={{ color: "#4b5675" }}>프로</span>
                 <span style={{ fontWeight: 700 }}>{selPro?.name}</span>
               </div>
-              <div style={{ display: "flex", justifyContent: "space-between", fontSize: 13 }}>
+              <div style={{ display: "flex", justifyContent: "space-between", fontSize: 14 }}>
                 <span style={{ color: "#4b5675" }}>레슨 종류</span>
                 <span style={{ fontWeight: 700 }}>{lessonType}</span>
               </div>
-              <div style={{ display: "flex", justifyContent: "space-between", fontSize: 13 }}>
+              <div style={{ display: "flex", justifyContent: "space-between", fontSize: 14 }}>
                 <span style={{ color: "#4b5675" }}>날짜</span>
                 <span style={{ fontWeight: 700 }}>{selDate} ({DOW_KR[new Date(selDate).getDay()]})</span>
               </div>
-              <div style={{ display: "flex", justifyContent: "space-between", fontSize: 13 }}>
+              <div style={{ display: "flex", justifyContent: "space-between", fontSize: 14 }}>
                 <span style={{ color: "#4b5675" }}>시간</span>
                 <span style={{ fontWeight: 700, color: "#34d399" }}>{selSlot}</span>
               </div>
             </div>
-            <button onClick={() => setStep(2)} style={{ fontSize: 11, color: "#94a3b8", background: "none", border: "none", cursor: "pointer", marginTop: 8 }}>
+            <button onClick={() => setStep(2)} style={{ fontSize: 12, color: "#94a3b8", background: "none", border: "none", cursor: "pointer", marginTop: 8 }}>
               ← 날짜·시간 변경
             </button>
           </div>
@@ -666,7 +666,7 @@ function BookScreen({ coaches, selPro, setSelPro, setDetailPro, showToast, setTa
 
           {lessonType.includes("그룹") && (
             <div style={{ marginBottom: 12 }}>
-              <div style={{ fontSize: 12, color: "#94a3b8", marginBottom: 6 }}>인원 수</div>
+              <div style={{ fontSize: 13, color: "#94a3b8", marginBottom: 6 }}>인원 수</div>
               <div style={{ display: "flex", gap: 6 }}>
                 {[1, 2, 3].map(n => (
                   <button key={n} onClick={() => setBPeople(n)} style={{
@@ -736,8 +736,8 @@ function MyScreen({ showToast, theme, setTheme }) {
   if (!authPhone) {
     return (
       <div style={{ padding: 30, textAlign: "center" }}>
-        <div style={{ fontSize: 15, fontWeight: 700, marginBottom: 8 }}>내 정보 확인</div>
-        <div style={{ fontSize: 13, color: "#94a3b8", marginBottom: 16 }}>
+        <div style={{ fontSize: 16, fontWeight: 700, marginBottom: 8 }}>내 정보 확인</div>
+        <div style={{ fontSize: 14, color: "#94a3b8", marginBottom: 16 }}>
           연락처를 입력하면<br />수강권·예약·레슨기록을 확인할 수 있습니다.
         </div>
         <input placeholder="010-0000-0000" value={rawPhone}
@@ -782,27 +782,27 @@ function MyScreen({ showToast, theme, setTheme }) {
             padding:"10px 14px", marginBottom:10, cursor:"pointer",
             display:"flex", alignItems:"center", gap:10,
           }}>
-          <span style={{ fontSize: 23 }}>⭐</span>
+          <span style={{ fontSize: 24 }}>⭐</span>
           <div style={{ flex:1 }}>
-            <div style={{ fontSize: 13, fontWeight:700, color:"#fbbf24" }}>레슨 평가를 남겨주세요!</div>
-            <div style={{ fontSize: 11, color:"#94a3b8", marginTop:2 }}>
+            <div style={{ fontSize: 14, fontWeight:700, color:"#fbbf24" }}>레슨 평가를 남겨주세요!</div>
+            <div style={{ fontSize: 12, color:"#94a3b8", marginTop:2 }}>
               {pendingRatings[0].coachName} · {pendingRatings[0].lessonDate} {pendingRatings[0].lessonType}
             </div>
           </div>
-          <div style={{ fontSize: 12, color:"#fbbf24", fontWeight:700 }}>평가하기 →</div>
+          <div style={{ fontSize: 13, color:"#fbbf24", fontWeight:700 }}>평가하기 →</div>
         </div>
       )}
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12 }}>
-        <div style={{ fontSize: 13, color: "#94a3b8" }}>📱 {authPhone}</div>
+        <div style={{ fontSize: 14, color: "#94a3b8" }}>📱 {authPhone}</div>
         <button onClick={() => { setAuthPhone(""); setRawPhone(""); }}
-          style={{ fontSize: 11, color: "#f87171", background: "none", border: "none", cursor: "pointer" }}>
+          style={{ fontSize: 12, color: "#f87171", background: "none", border: "none", cursor: "pointer" }}>
           로그아웃
         </button>
       </div>
       <div style={{ display: "flex", gap: 5, overflowX: "auto", paddingBottom: 4, marginBottom: 14 }}>
         {MY_TABS.map(t => (
           <button key={t.id} onClick={() => setMyTab(t.id)} style={{
-            flexShrink: 0, padding: "5px 10px", borderRadius: 20, fontSize: 11, cursor: "pointer",
+            flexShrink: 0, padding: "5px 10px", borderRadius: 20, fontSize: 12, cursor: "pointer",
             fontWeight: myTab === t.id ? 700 : 400,
             background: myTab === t.id ? "#34d399" : "#1a1e28",
             color: myTab === t.id ? "#000" : "#94a3b8",
@@ -853,9 +853,9 @@ function RatingPopup({ target, phone, onSubmit, onClose }) {
       }}>
         {/* 헤더 */}
         <div style={{ textAlign:"center", marginBottom:16 }}>
-          <div style={{ fontSize: 33, marginBottom:6 }}>⭐</div>
-          <div style={{ fontSize: 16, fontWeight:900, marginBottom:4 }}>레슨 어떠셨나요?</div>
-          <div style={{ fontSize: 12, color:"#94a3b8" }}>
+          <div style={{ fontSize: 34, marginBottom:6 }}>⭐</div>
+          <div style={{ fontSize: 17, fontWeight:900, marginBottom:4 }}>레슨 어떠셨나요?</div>
+          <div style={{ fontSize: 13, color:"#94a3b8" }}>
             {target.coachName} · {target.lessonDate} · {target.lessonType}
           </div>
         </div>
@@ -868,7 +868,7 @@ function RatingPopup({ target, phone, onSubmit, onClose }) {
               onMouseEnter={() => setHover(s)}
               onMouseLeave={() => setHover(0)}
               style={{
-                fontSize: 37, cursor:"pointer",
+                fontSize: 38, cursor:"pointer",
                 transition:"transform .1s",
                 transform: (hover||star) >= s ? "scale(1.15)" : "scale(1)",
                 filter: (hover||star) >= s ? "none" : "grayscale(1) opacity(.3)",
@@ -878,7 +878,7 @@ function RatingPopup({ target, phone, onSubmit, onClose }) {
 
         {/* 별점 레이블 */}
         <div style={{
-          textAlign:"center", fontSize: 14, fontWeight:700,
+          textAlign:"center", fontSize: 15, fontWeight:700,
           height:20, marginBottom:16,
           color: COLORS[hover||star] || "#4b5675",
           transition:"color .15s",
@@ -895,11 +895,11 @@ function RatingPopup({ target, phone, onSubmit, onClose }) {
             onChange={e => setComment(e.target.value)}
             rows={2}
             style={{
-              ...INP, resize:"none", fontSize: 13,
+              ...INP, resize:"none", fontSize: 14,
               lineHeight:1.6,
             }}
           />
-          <div style={{ textAlign:"right", fontSize: 10, color:"#4b5675", marginTop:2 }}>
+          <div style={{ textAlign:"right", fontSize: 11, color:"#4b5675", marginTop:2 }}>
             {comment.length}/100
           </div>
         </div>
@@ -907,12 +907,12 @@ function RatingPopup({ target, phone, onSubmit, onClose }) {
         {/* 버튼 */}
         <div style={{ display:"flex", gap:8 }}>
           <button onClick={onClose} style={{
-            flex:1, padding:"10px 0", borderRadius:9, fontSize: 13, cursor:"pointer",
+            flex:1, padding:"10px 0", borderRadius:9, fontSize: 14, cursor:"pointer",
             background:"#1a1e28", border:"1px solid #2d3347", color:"#94a3b8",
             fontFamily:"'Noto Sans KR', sans-serif",
           }}>나중에</button>
           <button onClick={doSubmit} disabled={!star || submitting} style={{
-            flex:2, padding:"10px 0", borderRadius:9, fontSize: 14, fontWeight:700,
+            flex:2, padding:"10px 0", borderRadius:9, fontSize: 15, fontWeight:700,
             cursor: !star || submitting ? "not-allowed" : "pointer",
             background: star ? "#34d399" : "#2d3347",
             color: star ? "#000" : "#4b5675",
@@ -935,17 +935,17 @@ function MyPassTab({ phone }) {
     apiGet({ action: "getMyPasses", phone }).then(setPasses).catch(() => {}).finally(() => setLoading(false));
   }, [phone]);
   if (loading) return <Spinner />;
-  if (!passes.length) return <div style={{ color: "#4b5675", textAlign: "center", padding: 24, fontSize: 13 }}>보유 수강권이 없습니다.</div>;
+  if (!passes.length) return <div style={{ color: "#4b5675", textAlign: "center", padding: 24, fontSize: 14 }}>보유 수강권이 없습니다.</div>;
   return passes.map(p => (
     <div key={p.수강권ID} style={{
       background: "linear-gradient(135deg,rgba(52,211,153,.11),rgba(56,189,248,.05))",
       border: "1px solid rgba(52,211,153,.22)", borderRadius: 12, padding: 12, marginBottom: 8,
     }}>
-      <div style={{ fontSize: 12, fontWeight: 700, color: "#34d399", marginBottom: 4 }}>🎫 {p.수강권종류}</div>
-      <div style={{ fontSize: 25, fontWeight: 900, marginBottom: 2 }}>
-        {p.잔여횟수} <span style={{ fontSize: 13, color: "#94a3b8" }}>/ {p.총횟수}회</span>
+      <div style={{ fontSize: 13, fontWeight: 700, color: "#34d399", marginBottom: 4 }}>🎫 {p.수강권종류}</div>
+      <div style={{ fontSize: 26, fontWeight: 900, marginBottom: 2 }}>
+        {p.잔여횟수} <span style={{ fontSize: 14, color: "#94a3b8" }}>/ {p.총횟수}회</span>
       </div>
-      <div style={{ fontSize: 11, color: "#94a3b8" }}>만료 {p.만료일}</div>
+      <div style={{ fontSize: 12, color: "#94a3b8" }}>만료 {p.만료일}</div>
       <div style={{ height: 3, background: "#1f2435", borderRadius: 2, marginTop: 8 }}>
         <div style={{ height: 3, background: "#34d399", borderRadius: 2, width: `${Math.min(100, (Number(p.잔여횟수) / Number(p.총횟수)) * 100)}%` }} />
       </div>
@@ -1048,7 +1048,7 @@ function MyBookingTab({ phone, showToast }) {
                 .finally(()=>setRepeatLoading(false));
             }
           }} style={{
-            flex: 1, padding: "7px 0", borderRadius: 8, fontSize: 13, cursor: "pointer",
+            flex: 1, padding: "7px 0", borderRadius: 8, fontSize: 14, cursor: "pointer",
             fontWeight: viewMode === v.id ? 700 : 400,
             background: viewMode === v.id ? "#34d399" : "#1a1e28",
             color: viewMode === v.id ? "#000" : "#94a3b8",
@@ -1068,22 +1068,22 @@ function MyBookingTab({ phone, showToast }) {
                   if (calMonth === 0) { setCalYear(y => y - 1); setCalMonth(11); }
                   else setCalMonth(m => m - 1);
                   setSelDate("");
-                }} style={{ background: "none", border: "none", color: "#94a3b8", fontSize: 19, cursor: "pointer", padding: "0 8px" }}>‹</button>
-                <div style={{ fontSize: 15, fontWeight: 900 }}>
+                }} style={{ background: "none", border: "none", color: "#94a3b8", fontSize: 20, cursor: "pointer", padding: "0 8px" }}>‹</button>
+                <div style={{ fontSize: 16, fontWeight: 900 }}>
                   {calYear}년 {calMonth + 1}월
                 </div>
                 <button onClick={() => {
                   if (calMonth === 11) { setCalYear(y => y + 1); setCalMonth(0); }
                   else setCalMonth(m => m + 1);
                   setSelDate("");
-                }} style={{ background: "none", border: "none", color: "#94a3b8", fontSize: 19, cursor: "pointer", padding: "0 8px" }}>›</button>
+                }} style={{ background: "none", border: "none", color: "#94a3b8", fontSize: 20, cursor: "pointer", padding: "0 8px" }}>›</button>
               </div>
 
               {/* 요일 헤더 */}
               <div style={{ display: "grid", gridTemplateColumns: "repeat(7,1fr)", marginBottom: 4 }}>
                 {DOW_KR.map((d, i) => (
                   <div key={d} style={{
-                    textAlign: "center", fontSize: 11, fontWeight: 700, padding: "4px 0",
+                    textAlign: "center", fontSize: 12, fontWeight: 700, padding: "4px 0",
                     color: i === 0 ? "#f87171" : i === 6 ? "#38bdf8" : "#4b5675",
                   }}>{d}</div>
                 ))}
@@ -1111,7 +1111,7 @@ function MyBookingTab({ phone, showToast }) {
                         transition: "all .12s",
                       }}>
                       <div style={{
-                        fontSize: 13, fontWeight: isToday || isSel ? 900 : 400,
+                        fontSize: 14, fontWeight: isToday || isSel ? 900 : 400,
                         color: isSel ? "#000" : dow === 0 ? "#f87171" : dow === 6 ? "#38bdf8" : "#e2e8f0",
                       }}>{day}</div>
                       {/* 예약 도트 */}
@@ -1133,7 +1133,7 @@ function MyBookingTab({ phone, showToast }) {
               {/* 범례 */}
               <div style={{ display: "flex", gap: 10, marginTop: 10, flexWrap: "wrap" }}>
                 {Object.entries(statusColor).map(([s, c]) => (
-                  <div key={s} style={{ display: "flex", alignItems: "center", gap: 4, fontSize: 11, color: "#94a3b8" }}>
+                  <div key={s} style={{ display: "flex", alignItems: "center", gap: 4, fontSize: 12, color: "#94a3b8" }}>
                     <div style={{ width: 7, height: 7, borderRadius: "50%", background: c }} />
                     {s}
                   </div>
@@ -1143,11 +1143,11 @@ function MyBookingTab({ phone, showToast }) {
               {/* 선택된 날짜 예약 목록 */}
               {selDate && (
                 <div style={{ marginTop: 14 }}>
-                  <div style={{ fontSize: 12, fontWeight: 700, color: "#34d399", marginBottom: 8 }}>
+                  <div style={{ fontSize: 13, fontWeight: 700, color: "#34d399", marginBottom: 8 }}>
                     📅 {selDate.slice(5).replace("-", "/")} ({DOW_KR[new Date(selDate).getDay()]}) 예약
                   </div>
                   {selBookings.length === 0 ? (
-                    <div style={{ color: "#4b5675", fontSize: 13, textAlign: "center", padding: "16px 0" }}>
+                    <div style={{ color: "#4b5675", fontSize: 14, textAlign: "center", padding: "16px 0" }}>
                       이 날 예약이 없습니다.
                     </div>
                   ) : selBookings.map(b => (
@@ -1167,19 +1167,19 @@ function MyBookingTab({ phone, showToast }) {
                 const upcoming = monthBk.filter(b => b.상태 === "예약").length;
                 const done     = monthBk.filter(b => b.상태 === "완료").length;
                 if (monthBk.length === 0) return (
-                  <div style={{ textAlign: "center", color: "#4b5675", fontSize: 13, padding: "20px 0", marginTop: 12 }}>
+                  <div style={{ textAlign: "center", color: "#4b5675", fontSize: 14, padding: "20px 0", marginTop: 12 }}>
                     이 달 예약 내역이 없습니다.
                   </div>
                 );
                 return (
                   <div style={{ marginTop: 14, background: "var(--card)", border: "1px solid var(--border)", borderRadius: 10, padding: "12px 14px" }}>
-                    <div style={{ fontSize: 12, color: "#4b5675", marginBottom: 8 }}>{calYear}년 {calMonth+1}월 요약</div>
+                    <div style={{ fontSize: 13, color: "#4b5675", marginBottom: 8 }}>{calYear}년 {calMonth+1}월 요약</div>
                     <div style={{ display: "flex", gap: 14 }}>
-                      <div><div style={{ fontSize: 19, fontWeight: 900, color: "#34d399" }}>{upcoming}</div><div style={{ fontSize: 10, color: "#94a3b8" }}>예약</div></div>
-                      <div><div style={{ fontSize: 19, fontWeight: 900, color: "#38bdf8" }}>{done}</div><div style={{ fontSize: 10, color: "#94a3b8" }}>완료</div></div>
-                      <div><div style={{ fontSize: 19, fontWeight: 900, color: "#94a3b8" }}>{monthBk.length}</div><div style={{ fontSize: 10, color: "#94a3b8" }}>전체</div></div>
+                      <div><div style={{ fontSize: 20, fontWeight: 900, color: "#34d399" }}>{upcoming}</div><div style={{ fontSize: 11, color: "#94a3b8" }}>예약</div></div>
+                      <div><div style={{ fontSize: 20, fontWeight: 900, color: "#38bdf8" }}>{done}</div><div style={{ fontSize: 11, color: "#94a3b8" }}>완료</div></div>
+                      <div><div style={{ fontSize: 20, fontWeight: 900, color: "#94a3b8" }}>{monthBk.length}</div><div style={{ fontSize: 11, color: "#94a3b8" }}>전체</div></div>
                     </div>
-                    <div style={{ fontSize: 11, color: "#4b5675", marginTop: 8 }}>날짜를 탭하면 해당일 예약을 확인합니다.</div>
+                    <div style={{ fontSize: 12, color: "#4b5675", marginTop: 8 }}>날짜를 탭하면 해당일 예약을 확인합니다.</div>
                   </div>
                 );
               })()}
@@ -1195,7 +1195,7 @@ function MyBookingTab({ phone, showToast }) {
                   { id: "past",     label: "지난 예약" },
                 ].map(t => (
                   <button key={t.id} onClick={() => setListType(t.id)} style={{
-                    flex: 1, padding: "6px 0", borderRadius: 8, fontSize: 12, cursor: "pointer",
+                    flex: 1, padding: "6px 0", borderRadius: 8, fontSize: 13, cursor: "pointer",
                     fontWeight: listType === t.id ? 700 : 400,
                     background: listType === t.id ? "#1f2435" : "#1a1e28",
                     color: listType === t.id ? "#34d399" : "#94a3b8",
@@ -1204,7 +1204,7 @@ function MyBookingTab({ phone, showToast }) {
                 ))}
               </div>
               {listBookings.length === 0 ? (
-                <div style={{ color: "#4b5675", textAlign: "center", fontSize: 13, padding: 24 }}>예약이 없습니다.</div>
+                <div style={{ color: "#4b5675", textAlign: "center", fontSize: 14, padding: 24 }}>예약이 없습니다.</div>
               ) : listBookings.map(b => (
                 <BookingCard key={b.예약ID} booking={b}
                   onCancel={() => cancel(b.예약ID, b.수강생명)}
@@ -1276,24 +1276,24 @@ function BookingCard({ booking: b, onCancel, canCancel, statusColor }) {
         <div style={{ flex: 1 }}>
           <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 4 }}>
             <span style={{
-              fontSize: 10, padding: "2px 7px", borderRadius: 10, fontWeight: 700,
+              fontSize: 11, padding: "2px 7px", borderRadius: 10, fontWeight: 700,
               background: sc + "22", color: sc,
             }}>{b.상태}</span>
-            <span style={{ fontSize: 12, fontWeight: 700 }}>{b.프로명}</span>
+            <span style={{ fontSize: 13, fontWeight: 700 }}>{b.프로명}</span>
           </div>
-          <div style={{ fontSize: 13, color: "var(--text)", fontWeight: 600, marginBottom: 2 }}>
+          <div style={{ fontSize: 14, color: "var(--text)", fontWeight: 600, marginBottom: 2 }}>
             {b.레슨종류}
           </div>
-          <div style={{ fontSize: 12, color: "#94a3b8" }}>
+          <div style={{ fontSize: 13, color: "#94a3b8" }}>
             📅 {dateStr} ({dow}) · ⏰ {String(b.시작시간 || "").slice(0,5)}
           </div>
           {b.요청사항 && (
-            <div style={{ fontSize: 11, color: "#4b5675", marginTop: 3 }}>💬 {b.요청사항}</div>
+            <div style={{ fontSize: 12, color: "#4b5675", marginTop: 3 }}>💬 {b.요청사항}</div>
           )}
         </div>
         {canCancel && (
           <button onClick={onCancel} style={{
-            padding: "5px 10px", borderRadius: 7, fontSize: 11, cursor: "pointer", flexShrink: 0,
+            padding: "5px 10px", borderRadius: 7, fontSize: 12, cursor: "pointer", flexShrink: 0,
             background: "rgba(248,113,113,.12)", border: "1px solid rgba(248,113,113,.3)", color: "#f87171",
           }}>취소</button>
         )}
@@ -1372,7 +1372,7 @@ function RepeatBookingTab({ phone, repeats, loading, showToast, onCancel, onRefr
     <div>
       {/* 등록 버튼 */}
       <button onClick={showForm ? () => setShowForm(false) : openForm} style={{
-        width:"100%", padding:"9px 0", borderRadius:9, fontSize: 13, fontWeight:700,
+        width:"100%", padding:"9px 0", borderRadius:9, fontSize: 14, fontWeight:700,
         cursor:"pointer", marginBottom:14,
         background: showForm ? "#1a1e28" : "rgba(52,211,153,.15)",
         border: showForm ? "1px solid #2d3347" : "1px solid rgba(52,211,153,.3)",
@@ -1387,31 +1387,31 @@ function RepeatBookingTab({ phone, repeats, loading, showToast, onCancel, onRefr
           background:"#181c25", border:"1px solid rgba(52,211,153,.2)",
           borderRadius:12, padding:14, marginBottom:14,
         }}>
-          <div style={{ fontSize: 13, fontWeight:700, color:"#34d399", marginBottom:12 }}>
+          <div style={{ fontSize: 14, fontWeight:700, color:"#34d399", marginBottom:12 }}>
             🔁 반복 예약 설정
           </div>
 
           {/* 이름·연락처 */}
           <div style={{ display:"flex", gap:6, marginBottom:8 }}>
             <div style={{ flex:1 }}>
-              <div style={{ fontSize: 10, color:"#4b5675", marginBottom:3 }}>이름 *</div>
+              <div style={{ fontSize: 11, color:"#4b5675", marginBottom:3 }}>이름 *</div>
               <input value={myName} onChange={e=>setMyName(e.target.value)}
-                placeholder="이름" style={{ ...INP, fontSize: 12 }} />
+                placeholder="이름" style={{ ...INP, fontSize: 13 }} />
             </div>
             <div style={{ flex:1 }}>
-              <div style={{ fontSize: 10, color:"#4b5675", marginBottom:3 }}>연락처 *</div>
+              <div style={{ fontSize: 11, color:"#4b5675", marginBottom:3 }}>연락처 *</div>
               <input value={myPhone} onChange={e=>setMyPhone(e.target.value)}
-                placeholder="010-0000-0000" style={{ ...INP, fontSize: 12 }} />
+                placeholder="010-0000-0000" style={{ ...INP, fontSize: 13 }} />
             </div>
           </div>
 
           {/* 프로 선택 */}
           <div style={{ marginBottom:8 }}>
-            <div style={{ fontSize: 10, color:"#4b5675", marginBottom:4 }}>프로 선택 *</div>
+            <div style={{ fontSize: 11, color:"#4b5675", marginBottom:4 }}>프로 선택 *</div>
             <div style={{ display:"flex", flexWrap:"wrap", gap:4 }}>
               {coaches.map(c => (
                 <button key={c.id} onClick={() => setSelCoach(c.id)} style={{
-                  padding:"5px 10px", borderRadius:6, fontSize: 11, cursor:"pointer",
+                  padding:"5px 10px", borderRadius:6, fontSize: 12, cursor:"pointer",
                   fontWeight: selCoach===c.id ? 700 : 400,
                   background: selCoach===c.id ? (c.color||"#34d399") : "#1a1e28",
                   color: selCoach===c.id ? "#000" : "#94a3b8",
@@ -1423,14 +1423,14 @@ function RepeatBookingTab({ phone, repeats, loading, showToast, onCancel, onRefr
 
           {/* 레슨 종류 */}
           <div style={{ marginBottom:8 }}>
-            <div style={{ fontSize: 10, color:"#4b5675", marginBottom:4 }}>레슨 종류 *</div>
+            <div style={{ fontSize: 11, color:"#4b5675", marginBottom:4 }}>레슨 종류 *</div>
             <div style={{ display:"flex", flexWrap:"wrap", gap:4 }}>
               {(dbLessons.length > 0 ? dbLessons : []).map(l => {
                 const color = l["색상"] || "#34d399";
                 const isSel = selLesson === l["레슨명"];
                 return (
                   <button key={l["레슨ID"]} onClick={() => setSelLesson(l["레슨명"])} style={{
-                    padding:"4px 8px", borderRadius:5, fontSize: 11, cursor:"pointer",
+                    padding:"4px 8px", borderRadius:5, fontSize: 12, cursor:"pointer",
                     fontWeight: isSel ? 700 : 400,
                     background: isSel ? color : "#1a1e28",
                     color: isSel ? "#000" : "#94a3b8",
@@ -1443,11 +1443,11 @@ function RepeatBookingTab({ phone, repeats, loading, showToast, onCancel, onRefr
 
           {/* 주기 선택 */}
           <div style={{ marginBottom:8 }}>
-            <div style={{ fontSize: 10, color:"#4b5675", marginBottom:4 }}>반복 주기 *</div>
+            <div style={{ fontSize: 11, color:"#4b5675", marginBottom:4 }}>반복 주기 *</div>
             <div style={{ display:"flex", gap:6 }}>
               {["매주","격주"].map(c => (
                 <button key={c} onClick={() => setCycle(c)} style={{
-                  flex:1, padding:"8px 0", borderRadius:7, fontSize: 13, cursor:"pointer",
+                  flex:1, padding:"8px 0", borderRadius:7, fontSize: 14, cursor:"pointer",
                   fontWeight: cycle===c ? 700 : 400,
                   background: cycle===c ? "#34d399" : "#1a1e28",
                   color: cycle===c ? "#000" : "#94a3b8",
@@ -1456,7 +1456,7 @@ function RepeatBookingTab({ phone, repeats, loading, showToast, onCancel, onRefr
               ))}
             </div>
             {cycle === "격주" && (
-              <div style={{ fontSize: 10, color:"#4b5675", marginTop:4, padding:"5px 8px",
+              <div style={{ fontSize: 11, color:"#4b5675", marginTop:4, padding:"5px 8px",
                 background:"rgba(56,189,248,.06)", border:"1px solid rgba(56,189,248,.15)", borderRadius:6 }}>
                 💡 격주: 2주마다 한 번 자동 예약
               </div>
@@ -1465,11 +1465,11 @@ function RepeatBookingTab({ phone, repeats, loading, showToast, onCancel, onRefr
 
           {/* 요일 선택 */}
           <div style={{ marginBottom:8 }}>
-            <div style={{ fontSize: 10, color:"#4b5675", marginBottom:4 }}>{cycle} 반복 요일 *</div>
+            <div style={{ fontSize: 11, color:"#4b5675", marginBottom:4 }}>{cycle} 반복 요일 *</div>
             <div style={{ display:"flex", gap:4 }}>
               {DOW_KR.map((d,i) => (
                 <button key={i} onClick={() => setSelDow(i)} style={{
-                  flex:1, padding:"6px 0", borderRadius:6, fontSize: 12, cursor:"pointer",
+                  flex:1, padding:"6px 0", borderRadius:6, fontSize: 13, cursor:"pointer",
                   fontWeight: selDow===i ? 700 : 400,
                   background: selDow===i ? "#34d399" : "#1a1e28",
                   color: selDow===i ? "#000" : i===0?"#f87171":i===6?"#38bdf8":"#94a3b8",
@@ -1481,11 +1481,11 @@ function RepeatBookingTab({ phone, repeats, loading, showToast, onCancel, onRefr
 
           {/* 시간 선택 */}
           <div style={{ marginBottom:8 }}>
-            <div style={{ fontSize: 10, color:"#4b5675", marginBottom:4 }}>시작 시간 *</div>
+            <div style={{ fontSize: 11, color:"#4b5675", marginBottom:4 }}>시작 시간 *</div>
             <div style={{ display:"grid", gridTemplateColumns:"repeat(4,1fr)", gap:3 }}>
               {TIMES.map(t => (
                 <button key={t} onClick={() => setSelTime(t)} style={{
-                  padding:"5px 2px", borderRadius:5, fontSize: 11, cursor:"pointer", textAlign:"center",
+                  padding:"5px 2px", borderRadius:5, fontSize: 12, cursor:"pointer", textAlign:"center",
                   fontWeight: selTime===t ? 700 : 400,
                   background: selTime===t ? "#34d399" : "#1a1e28",
                   color: selTime===t ? "#000" : "#94a3b8",
@@ -1499,18 +1499,18 @@ function RepeatBookingTab({ phone, repeats, loading, showToast, onCancel, onRefr
           {/* 시작일 ~ 종료일 */}
           <div style={{ display:"flex", gap:6, marginBottom:8 }}>
             <div style={{ flex:1 }}>
-              <div style={{ fontSize: 10, color:"#4b5675", marginBottom:3 }}>시작일 *</div>
+              <div style={{ fontSize: 11, color:"#4b5675", marginBottom:3 }}>시작일 *</div>
               <input type="date" value={startDate} onChange={e=>setStartDate(e.target.value)}
-                style={{ ...INP, fontSize: 12 }} />
+                style={{ ...INP, fontSize: 13 }} />
             </div>
             <div style={{ flex:1 }}>
-              <div style={{ fontSize: 10, color:"#4b5675", marginBottom:3 }}>종료일 (선택)</div>
+              <div style={{ fontSize: 11, color:"#4b5675", marginBottom:3 }}>종료일 (선택)</div>
               <input type="date" value={endDate} onChange={e=>setEndDate(e.target.value)}
                 placeholder="수강권 만료일 자동 적용"
-                style={{ ...INP, fontSize: 12 }} />
+                style={{ ...INP, fontSize: 13 }} />
             </div>
           </div>
-          <div style={{ fontSize: 10, color:"#4b5675", marginBottom:12, padding:"5px 8px",
+          <div style={{ fontSize: 11, color:"#4b5675", marginBottom:12, padding:"5px 8px",
             background:"rgba(52,211,153,.05)", border:"1px solid rgba(52,211,153,.12)", borderRadius:6 }}>
             💡 종료일 미입력 시 수강권 만료일까지 자동 적용 · 수강권 소진 시 자동 종료
           </div>
@@ -1519,7 +1519,7 @@ function RepeatBookingTab({ phone, repeats, loading, showToast, onCancel, onRefr
           {selCoach && startDate && endDate && (
             <div style={{
               background:"rgba(52,211,153,.07)", border:"1px solid rgba(52,211,153,.2)",
-              borderRadius:8, padding:"8px 12px", marginBottom:12, fontSize: 12,
+              borderRadius:8, padding:"8px 12px", marginBottom:12, fontSize: 13,
             }}>
               <div style={{ color:"#34d399", fontWeight:700, marginBottom:4 }}>📋 설정 요약</div>
               <div style={{ color:"#94a3b8", lineHeight:1.8 }}>
@@ -1531,7 +1531,7 @@ function RepeatBookingTab({ phone, repeats, loading, showToast, onCancel, onRefr
           )}
 
           <button onClick={submit} disabled={submitting} style={{
-            width:"100%", padding:"10px 0", borderRadius:9, fontSize: 14, fontWeight:700,
+            width:"100%", padding:"10px 0", borderRadius:9, fontSize: 15, fontWeight:700,
             cursor: submitting ? "not-allowed" : "pointer",
             background:"#34d399", border:"none", color:"#000",
             opacity: submitting ? .6 : 1,
@@ -1542,9 +1542,9 @@ function RepeatBookingTab({ phone, repeats, loading, showToast, onCancel, onRefr
 
       {/* 반복 예약 목록 */}
       {loading ? <Spinner /> : repeats.length === 0 ? (
-        <div style={{ textAlign:"center", color:"#4b5675", fontSize: 13, padding:"30px 0" }}>
+        <div style={{ textAlign:"center", color:"#4b5675", fontSize: 14, padding:"30px 0" }}>
           등록된 반복 예약이 없습니다.<br/>
-          <span style={{ fontSize: 12, color:"#2d3347" }}>위 버튼으로 등록해보세요.</span>
+          <span style={{ fontSize: 13, color:"#2d3347" }}>위 버튼으로 등록해보세요.</span>
         </div>
       ) : repeats.map(r => (
         <div key={r["반복ID"]} style={{
@@ -1553,19 +1553,19 @@ function RepeatBookingTab({ phone, repeats, loading, showToast, onCancel, onRefr
           borderRadius:10, padding:"11px 13px", marginBottom:8,
           display:"flex", alignItems:"center", gap:10,
         }}>
-          <div style={{ fontSize: 25 }}>🔁</div>
+          <div style={{ fontSize: 26 }}>🔁</div>
           <div style={{ flex:1 }}>
-            <div style={{ fontSize: 13, fontWeight:700, marginBottom:3 }}>
+            <div style={{ fontSize: 14, fontWeight:700, marginBottom:3 }}>
               {r["프로명"]} · {r["레슨종류"]}
             </div>
-            <div style={{ fontSize: 12, color:"#34d399", fontWeight:700, marginBottom:2 }}>
+            <div style={{ fontSize: 13, color:"#34d399", fontWeight:700, marginBottom:2 }}>
               {r["주기"]||"매주"} {r["요일명"]}요일 {String(r["시작시간"]||"").slice(0,5)}
             </div>
-            <div style={{ fontSize: 11, color:"#4b5675" }}>
+            <div style={{ fontSize: 12, color:"#4b5675" }}>
               {String(r["시작일"]||"").slice(0,10)} ~ {String(r["종료일"]||"").slice(0,10)}
             </div>
             {r["마지막생성일"] && (
-              <div style={{ fontSize: 10, color:"#2d3347", marginTop:2 }}>
+              <div style={{ fontSize: 11, color:"#2d3347", marginTop:2 }}>
                 마지막 생성: {String(r["마지막생성일"]).slice(0,10)}
               </div>
             )}
@@ -1573,7 +1573,7 @@ function RepeatBookingTab({ phone, repeats, loading, showToast, onCancel, onRefr
           <button onClick={() => {
             if (window.confirm("반복 예약을 취소할까요?")) onCancel(r["반복ID"]);
           }} style={{
-            padding:"5px 10px", borderRadius:6, fontSize: 11, cursor:"pointer", flexShrink:0,
+            padding:"5px 10px", borderRadius:6, fontSize: 12, cursor:"pointer", flexShrink:0,
             background:"rgba(248,113,113,.12)", border:"1px solid rgba(248,113,113,.3)", color:"#f87171",
           }}>취소</button>
         </div>
@@ -1589,7 +1589,7 @@ function MyLogTab({ phone }) {
     apiGet({ action: "getMyLessonLog", phone }).then(setLogs).catch(() => {}).finally(() => setLoading(false));
   }, [phone]);
   if (loading) return <Spinner />;
-  if (!logs.length) return <div style={{ color: "#4b5675", textAlign: "center", fontSize: 13, padding: 20 }}>레슨 일지가 없습니다.</div>;
+  if (!logs.length) return <div style={{ color: "#4b5675", textAlign: "center", fontSize: 14, padding: 20 }}>레슨 일지가 없습니다.</div>;
   return logs.map((l, i) => (
     <div key={l.일지ID || i} style={{ display: "flex", gap: 10, marginBottom: 14 }}>
       <div style={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
@@ -1597,17 +1597,17 @@ function MyLogTab({ phone }) {
         {i < logs.length - 1 && <div style={{ width: 1, flex: 1, background: "#2d3347", margin: "3px 0" }} />}
       </div>
       <div style={{ flex: 1 }}>
-        <div style={{ fontSize: 11, color: "#4b5675", fontFamily: "monospace" }}>{l.레슨날짜} · {l.회차번호}회차</div>
-        <div style={{ fontSize: 13, fontWeight: 700, margin: "2px 0" }}>{l.프로명} · {l.레슨종류}</div>
+        <div style={{ fontSize: 12, color: "#4b5675", fontFamily: "monospace" }}>{l.레슨날짜} · {l.회차번호}회차</div>
+        <div style={{ fontSize: 14, fontWeight: 700, margin: "2px 0" }}>{l.프로명} · {l.레슨종류}</div>
         <div style={{ display: "flex", flexWrap: "wrap", gap: 4, margin: "4px 0" }}>
           {safeArr(l.진도태그).map((t, j) => (
             <span key={j} style={{
-              fontSize: 10, padding: "1px 6px", borderRadius: 4,
+              fontSize: 11, padding: "1px 6px", borderRadius: 4,
               background: "rgba(56,189,248,.12)", color: "#38bdf8", border: "1px solid rgba(56,189,248,.2)",
             }}>{t}</span>
           ))}
         </div>
-        <div style={{ fontSize: 12, color: "#94a3b8", lineHeight: 1.6 }}>{l.코멘트}</div>
+        <div style={{ fontSize: 13, color: "#94a3b8", lineHeight: 1.6 }}>{l.코멘트}</div>
       </div>
     </div>
   ));
@@ -1621,28 +1621,28 @@ function MySwingTab({ phone }) {
   }, [phone]);
   if (loading) return <Spinner />;
   if (!archive.length) return (
-    <div style={{ color: "#4b5675", fontSize: 13, textAlign: "center", padding: 20, lineHeight: 1.8 }}>
+    <div style={{ color: "#4b5675", fontSize: 14, textAlign: "center", padding: 20, lineHeight: 1.8 }}>
       스윙 영상이 없습니다.<br />
       <span style={{ color: "#34d399" }}>게시판 → 스윙분석에서 영상을 올려보세요!</span>
     </div>
   );
   return (
     <div>
-      <div style={{ fontSize: 12, color: "#94a3b8", padding: "8px 10px", background: "#181c25", borderRadius: 8, marginBottom: 12 }}>
+      <div style={{ fontSize: 13, color: "#94a3b8", padding: "8px 10px", background: "#181c25", borderRadius: 8, marginBottom: 12 }}>
         🎥 내 스윙 영상과 프로 피드백이 자동 수집됩니다.
       </div>
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
         {archive.map((item, i) => (
           <div key={i} style={{ background: "var(--card)", border: "1px solid var(--border)", borderRadius: 10, overflow: "hidden" }}>
             <div style={{ height: 64, background: "rgba(0,0,0,.5)", display: "flex", alignItems: "center", justifyContent: "center", position: "relative" }}>
-              <span style={{ fontSize: 23 }}>▶️</span>
-              <div style={{ position: "absolute", bottom: 4, left: 6, fontSize: 10, color: "rgba(255,255,255,.6)", background: "rgba(0,0,0,.4)", padding: "1px 4px", borderRadius: 3 }}>
+              <span style={{ fontSize: 24 }}>▶️</span>
+              <div style={{ position: "absolute", bottom: 4, left: 6, fontSize: 11, color: "rgba(255,255,255,.6)", background: "rgba(0,0,0,.4)", padding: "1px 4px", borderRadius: 3 }}>
                 {item.post?.작성일시?.slice(0, 10)}
               </div>
             </div>
             <div style={{ padding: "6px 8px" }}>
-              {item.proFeedback?.[0] && <div style={{ fontSize: 10, color: "#34d399", marginBottom: 2 }}>🏌️ {item.proFeedback[0].작성자}</div>}
-              <div style={{ fontSize: 11, color: "#94a3b8", lineHeight: 1.4 }}>
+              {item.proFeedback?.[0] && <div style={{ fontSize: 11, color: "#34d399", marginBottom: 2 }}>🏌️ {item.proFeedback[0].작성자}</div>}
+              <div style={{ fontSize: 12, color: "#94a3b8", lineHeight: 1.4 }}>
                 {item.proFeedback?.[0]?.내용?.slice(0, 40) || "피드백 대기 중..."}
               </div>
             </div>
@@ -1690,10 +1690,10 @@ function MySettingTab({ phone, showToast, theme, setTheme }) {
               background: isSel ? "rgba(52,211,153,.1)" : "var(--card)",
               textAlign:"center", transition:"all .15s",
             }}>
-              <div style={{ fontSize: 23, marginBottom:4 }}>{t.icon}</div>
-              <div style={{ fontSize: 12, fontWeight: isSel ? 900 : 400,
+              <div style={{ fontSize: 24, marginBottom:4 }}>{t.icon}</div>
+              <div style={{ fontSize: 13, fontWeight: isSel ? 900 : 400,
                 color: isSel ? "#34d399" : "var(--text2)" }}>{t.label}</div>
-              <div style={{ fontSize: 10, color:"var(--text3)", marginTop:2 }}>{t.desc}</div>
+              <div style={{ fontSize: 11, color:"var(--text3)", marginTop:2 }}>{t.desc}</div>
               {isSel && (
                 <div style={{ marginTop:5, width:6, height:6, borderRadius:"50%",
                   background:"#34d399", margin:"5px auto 0" }}/>
@@ -1708,8 +1708,8 @@ function MySettingTab({ phone, showToast, theme, setTheme }) {
       {SETTINGS.map(s => (
         <div key={s.key} style={{ display: "flex", alignItems: "center", gap: 10, padding: "10px 12px", background: "var(--card)", borderRadius: 8, marginBottom: 6 }}>
           <div style={{ flex: 1 }}>
-            <div style={{ fontSize: 13, fontWeight: 700 }}>{s.label}</div>
-            <div style={{ fontSize: 11, color: "var(--text3)" }}>{s.sub}</div>
+            <div style={{ fontSize: 14, fontWeight: 700 }}>{s.label}</div>
+            <div style={{ fontSize: 12, color: "var(--text3)" }}>{s.sub}</div>
           </div>
           <div onClick={() => setNotif(p => ({ ...p, [s.key]: !p[s.key] }))}
             style={{ width: 38, height: 20, borderRadius: 10, cursor: "pointer", background: notif[s.key] ? "#34d399" : "var(--border)", position: "relative", transition: "background .2s" }}>
@@ -1727,8 +1727,8 @@ function MySettingTab({ phone, showToast, theme, setTheme }) {
         { icon: "❓", label: "자주 묻는 질문 (FAQ)",      fn: () => alert("FAQ 준비 중") },
       ].map((item, i) => (
         <div key={i} onClick={item.fn} style={{ display: "flex", alignItems: "center", gap: 10, padding: "10px 12px", background: "var(--card)", borderRadius: 8, marginBottom: 6, cursor: "pointer" }}>
-          <span style={{ fontSize: 17 }}>{item.icon}</span>
-          <span style={{ fontSize: 13 }}>{item.label}</span>
+          <span style={{ fontSize: 18 }}>{item.icon}</span>
+          <span style={{ fontSize: 14 }}>{item.label}</span>
           <span style={{ marginLeft: "auto", color: "var(--text3)" }}>›</span>
         </div>
       ))}
@@ -1790,7 +1790,7 @@ function WriteForm({ coaches, adminPw, onSubmit, onCancel }) {
       <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginBottom: 12 }}>
         {CATS.map(c => (
           <button key={c} onClick={() => setCategory(c)} style={{
-            padding: "5px 12px", borderRadius: 20, fontSize: 12, cursor: "pointer",
+            padding: "5px 12px", borderRadius: 20, fontSize: 13, cursor: "pointer",
             fontWeight: category === c ? 700 : 400,
             background: category === c ? "#34d399" : "#1a1e28",
             color: category === c ? "#000" : "#94a3b8",
@@ -1805,10 +1805,10 @@ function WriteForm({ coaches, adminPw, onSubmit, onCancel }) {
           background: "rgba(248,113,113,.07)", border: "1px solid rgba(248,113,113,.25)",
           borderRadius: 9,
         }}>
-          <div style={{ fontSize: 12, fontWeight: 700, color: "#f87171", marginBottom: 6 }}>
+          <div style={{ fontSize: 13, fontWeight: 700, color: "#f87171", marginBottom: 6 }}>
             🔒 관리자 전용 카테고리
           </div>
-          <div style={{ fontSize: 11, color: "#94a3b8", marginBottom: 8 }}>
+          <div style={{ fontSize: 12, color: "#94a3b8", marginBottom: 8 }}>
             공지사항 작성은 관리자 비밀번호가 필요합니다.
           </div>
           <input
@@ -1816,7 +1816,7 @@ function WriteForm({ coaches, adminPw, onSubmit, onCancel }) {
             placeholder="관리자 비밀번호 입력"
             value={inputPw}
             onChange={e => setInputPw(e.target.value)}
-            style={{ ...INP, fontSize: 12 }}
+            style={{ ...INP, fontSize: 13 }}
           />
         </div>
       )}
@@ -1827,18 +1827,18 @@ function WriteForm({ coaches, adminPw, onSubmit, onCancel }) {
           background: "rgba(52,211,153,.07)", border: "1px solid rgba(52,211,153,.2)",
           borderRadius: 9, display: "flex", alignItems: "center", gap: 8,
         }}>
-          <span style={{ fontSize: 15 }}>✅</span>
-          <div style={{ fontSize: 12, color: "#34d399" }}>관리자로 로그인됨 — 공지사항 작성 가능</div>
+          <span style={{ fontSize: 16 }}>✅</span>
+          <div style={{ fontSize: 13, color: "#34d399" }}>관리자로 로그인됨 — 공지사항 작성 가능</div>
         </div>
       )}
 
       {category === "스윙분석/질문방" && (
         <div style={{ marginBottom: 10 }}>
-          <div style={{ fontSize: 12, color: "#4b5675", marginBottom: 4 }}>프로 태그 *</div>
+          <div style={{ fontSize: 13, color: "#4b5675", marginBottom: 4 }}>프로 태그 *</div>
           <div style={{ display: "flex", gap: 6 }}>
             {coaches.map(c => (
               <button key={c.id} onClick={() => setProTag(c.id)} style={{
-                flex: 1, padding: "6px 0", borderRadius: 8, fontSize: 12, cursor: "pointer",
+                flex: 1, padding: "6px 0", borderRadius: 8, fontSize: 13, cursor: "pointer",
                 fontWeight: proTag === c.id ? 700 : 400,
                 background: proTag === c.id ? "rgba(52,211,153,.15)" : "#1a1e28",
                 color: proTag === c.id ? "#34d399" : "#94a3b8",
@@ -1856,11 +1856,11 @@ function WriteForm({ coaches, adminPw, onSubmit, onCancel }) {
       </div>
       {/* 이미지 URL 첨부 (Google Drive) */}
       <div style={{ marginBottom: 10 }}>
-        <div style={{ fontSize: 11, color: "#4b5675", marginBottom: 6, display:"flex", alignItems:"center", justifyContent:"space-between" }}>
+        <div style={{ fontSize: 12, color: "#4b5675", marginBottom: 6, display:"flex", alignItems:"center", justifyContent:"space-between" }}>
           <span>📎 이미지 첨부 (Google Drive URL)</span>
           {imgUrls.length < 3 && (
             <button onClick={() => setImgUrls(p => [...p, ""])}
-              style={{ fontSize: 11, color: "#38bdf8", background:"none", border:"none", cursor:"pointer" }}>
+              style={{ fontSize: 12, color: "#38bdf8", background:"none", border:"none", cursor:"pointer" }}>
               + 추가
             </button>
           )}
@@ -1871,16 +1871,16 @@ function WriteForm({ coaches, adminPw, onSubmit, onCancel }) {
               placeholder="https://drive.google.com/file/d/..."
               value={u}
               onChange={e => setImgUrls(p => p.map((v, j) => j===i ? e.target.value : v))}
-              style={{ ...INP, flex:1, fontSize: 11 }}
+              style={{ ...INP, flex:1, fontSize: 12 }}
             />
             {imgUrls.length > 1 && (
               <button onClick={() => setImgUrls(p => p.filter((_,j) => j!==i))}
-                style={{ fontSize: 13, color:"#f87171", background:"none", border:"none", cursor:"pointer" }}>✕</button>
+                style={{ fontSize: 14, color:"#f87171", background:"none", border:"none", cursor:"pointer" }}>✕</button>
             )}
           </div>
         ))}
         {imgUrls.some(u=>u.trim()) && (
-          <div style={{ fontSize: 10, color:"#4b5675", marginTop:4, padding:"4px 8px", background:"rgba(56,189,248,.05)", borderRadius:5, border:"1px solid rgba(56,189,248,.12)" }}>
+          <div style={{ fontSize: 11, color:"#4b5675", marginTop:4, padding:"4px 8px", background:"rgba(56,189,248,.05)", borderRadius:5, border:"1px solid rgba(56,189,248,.12)" }}>
             💡 Drive → 파일 우클릭 → 공유 → "링크가 있는 모든 사용자" → 링크 복사
           </div>
         )}
@@ -1888,12 +1888,12 @@ function WriteForm({ coaches, adminPw, onSubmit, onCancel }) {
       {category === "스윙분석/질문방" && (
         <label style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6, padding: "8px 10px", background: "rgba(251,191,36,.06)", border: "1px solid rgba(251,191,36,.2)", borderRadius: 8, cursor: "pointer" }}>
           <input type="checkbox" checked={isSecret} onChange={e => setIsSecret(e.target.checked)} />
-          <div><div style={{ fontSize: 13, fontWeight: 700, color: "#fbbf24" }}>🔒 비밀글로 등록</div><div style={{ fontSize: 11, color: "#4b5675" }}>나, 프로, 관리자만 열람 가능</div></div>
+          <div><div style={{ fontSize: 14, fontWeight: 700, color: "#fbbf24" }}>🔒 비밀글로 등록</div><div style={{ fontSize: 12, color: "#4b5675" }}>나, 프로, 관리자만 열람 가능</div></div>
         </label>
       )}
       <label style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 14, padding: "6px 10px", background: "#1a1e28", borderRadius: 8, cursor: "pointer" }}>
         <input type="checkbox" checked={isAnon} onChange={e => setIsAnon(e.target.checked)} />
-        <span style={{ fontSize: 13, color: "#94a3b8" }}>🕵️ 이름 숨기기</span>
+        <span style={{ fontSize: 14, color: "#94a3b8" }}>🕵️ 이름 숨기기</span>
       </label>
       <div style={{ display: "flex", gap: 8 }}>
         <Btn onClick={onCancel} variant="secondary" style={{ flex: 1 }}>취소</Btn>
@@ -1937,14 +1937,14 @@ function CommentSection({ postId, phone, coaches, adminPw }) {
     <div key={c.댓글ID} style={{ marginLeft: depth * 14, marginBottom: 8 }}>
       <div style={{ borderLeft: `2px solid ${c.관리자여부 ? "#34d399" : depth ? "#38bdf8" : "#2d3347"}`, borderRadius: "0 8px 8px 0", padding: "7px 10px", background: c.관리자여부 ? "rgba(52,211,153,.05)" : "#181c25" }}>
         <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 3 }}>
-          <span style={{ fontSize: 12, fontWeight: 700 }}>{c.작성자}</span>
-          {c.관리자여부 && <span style={{ fontSize: 10, background: "#34d399", color: "#000", padding: "1px 5px", borderRadius: 3, fontWeight: 900 }}>프로</span>}
-          <span style={{ fontSize: 10, color: "#4b5675", marginLeft: "auto" }}>{c.작성일시?.slice(5, 16)}</span>
+          <span style={{ fontSize: 13, fontWeight: 700 }}>{c.작성자}</span>
+          {c.관리자여부 && <span style={{ fontSize: 11, background: "#34d399", color: "#000", padding: "1px 5px", borderRadius: 3, fontWeight: 900 }}>프로</span>}
+          <span style={{ fontSize: 11, color: "#4b5675", marginLeft: "auto" }}>{c.작성일시?.slice(5, 16)}</span>
         </div>
-        <div style={{ fontSize: 13, color: "#94a3b8", lineHeight: 1.5 }}>{c.내용}</div>
+        <div style={{ fontSize: 14, color: "#94a3b8", lineHeight: 1.5 }}>{c.내용}</div>
         <div style={{ display: "flex", gap: 10, marginTop: 4 }}>
-          <button onClick={() => handleLike(c.댓글ID)} style={{ fontSize: 11, background: "none", border: "none", color: c.likedByMe ? "#38bdf8" : "#4b5675", cursor: "pointer" }}>👍 {c.좋아요수 || 0}</button>
-          {depth === 0 && <button onClick={() => setReplyTo(replyTo === c.댓글ID ? null : c.댓글ID)} style={{ fontSize: 11, background: "none", border: "none", color: "#4b5675", cursor: "pointer" }}>↩️ 답글</button>}
+          <button onClick={() => handleLike(c.댓글ID)} style={{ fontSize: 12, background: "none", border: "none", color: c.likedByMe ? "#38bdf8" : "#4b5675", cursor: "pointer" }}>👍 {c.좋아요수 || 0}</button>
+          {depth === 0 && <button onClick={() => setReplyTo(replyTo === c.댓글ID ? null : c.댓글ID)} style={{ fontSize: 12, background: "none", border: "none", color: "#4b5675", cursor: "pointer" }}>↩️ 답글</button>}
         </div>
       </div>
       {replyTo === c.댓글ID && (
@@ -1955,8 +1955,8 @@ function CommentSection({ postId, phone, coaches, adminPw }) {
             <input placeholder="연락처" value={myPhone} onChange={e => setMyPhone(e.target.value)} style={{ ...INP, flex: 1 }} />
           </div>
           <div style={{ display: "flex", gap: 6, marginTop: 6 }}>
-            <Btn variant="secondary" onClick={() => setReplyTo(null)} style={{ flex: 1, padding: "6px 0", fontSize: 12 }}>취소</Btn>
-            <Btn onClick={() => submit(c.댓글ID)} disabled={loading} style={{ flex: 2, padding: "6px 0", fontSize: 12 }}>{loading ? "등록 중..." : "등록"}</Btn>
+            <Btn variant="secondary" onClick={() => setReplyTo(null)} style={{ flex: 1, padding: "6px 0", fontSize: 13 }}>취소</Btn>
+            <Btn onClick={() => submit(c.댓글ID)} disabled={loading} style={{ flex: 2, padding: "6px 0", fontSize: 13 }}>{loading ? "등록 중..." : "등록"}</Btn>
           </div>
         </div>
       )}
@@ -1975,7 +1975,7 @@ function CommentSection({ postId, phone, coaches, adminPw }) {
             <input placeholder="이름" value={name} onChange={e => setName(e.target.value)} style={{ ...INP, flex: 1 }} />
             <input placeholder="연락처" value={myPhone} onChange={e => setMyPhone(e.target.value)} style={{ ...INP, flex: 1 }} />
           </div>
-          <Btn onClick={() => submit(null)} disabled={loading} style={{ padding: "8px 0", fontSize: 12 }}>{loading ? "등록 중..." : "댓글 등록"}</Btn>
+          <Btn onClick={() => submit(null)} disabled={loading} style={{ padding: "8px 0", fontSize: 13 }}>{loading ? "등록 중..." : "댓글 등록"}</Btn>
         </div>
       )}
     </div>
@@ -2004,9 +2004,9 @@ function PostDetail({ post, phone, coaches, adminPw, onBack, showToast }) {
 
   if (noAccess) return (
     <div style={{ padding: 40, textAlign: "center" }}>
-      <div style={{ fontSize: 39, marginBottom: 12 }}>🔒</div>
-      <div style={{ fontSize: 15, fontWeight: 700, marginBottom: 6 }}>열람 권한이 없습니다</div>
-      <div style={{ fontSize: 13, color: "#94a3b8", marginBottom: 16 }}>작성자 본인과 프로·관리자만 볼 수 있습니다.</div>
+      <div style={{ fontSize: 40, marginBottom: 12 }}>🔒</div>
+      <div style={{ fontSize: 16, fontWeight: 700, marginBottom: 6 }}>열람 권한이 없습니다</div>
+      <div style={{ fontSize: 14, color: "#94a3b8", marginBottom: 16 }}>작성자 본인과 프로·관리자만 볼 수 있습니다.</div>
       <Btn onClick={onBack} variant="secondary">← 목록으로</Btn>
     </div>
   );
@@ -2016,25 +2016,25 @@ function PostDetail({ post, phone, coaches, adminPw, onBack, showToast }) {
 
   return (
     <div style={{ padding: "12px 14px" }}>
-      <button onClick={onBack} style={{ background: "none", border: "none", color: "#34d399", fontSize: 13, cursor: "pointer", marginBottom: 10 }}>← 게시판</button>
+      <button onClick={onBack} style={{ background: "none", border: "none", color: "#34d399", fontSize: 14, cursor: "pointer", marginBottom: 10 }}>← 게시판</button>
       {loading ? <Spinner /> : (
         <>
-          <div style={{ fontSize: 16, fontWeight: 900, marginBottom: 6 }}>{data.제목}</div>
-          <div style={{ fontSize: 11, color: "#4b5675", marginBottom: 12 }}>
+          <div style={{ fontSize: 17, fontWeight: 900, marginBottom: 6 }}>{data.제목}</div>
+          <div style={{ fontSize: 12, color: "#4b5675", marginBottom: 12 }}>
             {data.익명여부 ? "익명" : data.작성자} · {data.작성일시?.slice(0, 16)} · 조회 {data.조회수}
           </div>
-          <div style={{ fontSize: 14, color: "#94a3b8", lineHeight: 1.8, marginBottom: 14 }}>{data.내용}</div>
+          <div style={{ fontSize: 15, color: "#94a3b8", lineHeight: 1.8, marginBottom: 14 }}>{data.내용}</div>
           {attachments.length > 0 && (
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 6, marginBottom: 12 }}>
               {attachments.map((f, i) => (
                 isImage(f.name)
                   ? <img key={i} src={f.data} alt={f.name} style={{ width: "100%", borderRadius: 8, cursor: "pointer" }} onClick={() => window.open(f.data)} />
-                  : <a key={i} href={f.data} download={f.name} style={{ padding: "8px 10px", background: "#1a1e28", borderRadius: 8, fontSize: 12, color: "#38bdf8", textDecoration: "none", display: "block" }}>📎 {f.name}</a>
+                  : <a key={i} href={f.data} download={f.name} style={{ padding: "8px 10px", background: "#1a1e28", borderRadius: 8, fontSize: 13, color: "#38bdf8", textDecoration: "none", display: "block" }}>📎 {f.name}</a>
               ))}
             </div>
           )}
           <div style={{ display: "flex", gap: 14, marginBottom: 14 }}>
-            <button onClick={handleLike} style={{ background: "none", border: "none", color: full?.likedByMe ? "#38bdf8" : "#4b5675", fontSize: 14, cursor: "pointer" }}>
+            <button onClick={handleLike} style={{ background: "none", border: "none", color: full?.likedByMe ? "#38bdf8" : "#4b5675", fontSize: 15, cursor: "pointer" }}>
               👍 {data.좋아요수 || 0} {full?.likedByMe ? "(내가 좋아요)" : ""}
             </button>
           </div>
@@ -2069,7 +2069,7 @@ function BoardScreen({ coaches, myPhone, adminPw, showToast }) {
   if (selPost) return <PostDetail post={selPost} phone={myPhone} coaches={coaches} adminPw={adminPw} onBack={() => { setSelPost(null); load(); }} showToast={showToast} />;
   if (writing) return (
     <div style={{ padding: "12px 14px" }}>
-      <div style={{ fontSize: 15, fontWeight: 900, marginBottom: 14 }}>✏️ 글쓰기</div>
+      <div style={{ fontSize: 16, fontWeight: 900, marginBottom: 14 }}>✏️ 글쓰기</div>
       <WriteForm coaches={coaches} adminPw={adminPw} onCancel={() => setWriting(false)}
         onSubmit={async p => { await apiPost({ action: "createPost", ...p }); showToast("✅ 등록 완료"); setWriting(false); load(); }} />
     </div>
@@ -2078,13 +2078,13 @@ function BoardScreen({ coaches, myPhone, adminPw, showToast }) {
   return (
     <div style={{ padding: "12px 14px" }}>
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 10 }}>
-        <div style={{ fontSize: 17, fontWeight: 900 }}>게시판</div>
-        <button onClick={() => setWriting(true)} style={{ padding: "5px 12px", borderRadius: 8, background: "#34d399", color: "#000", border: "none", fontSize: 12, fontWeight: 700, cursor: "pointer" }}>✏️ 글쓰기</button>
+        <div style={{ fontSize: 18, fontWeight: 900 }}>게시판</div>
+        <button onClick={() => setWriting(true)} style={{ padding: "5px 12px", borderRadius: 8, background: "#34d399", color: "#000", border: "none", fontSize: 13, fontWeight: 700, cursor: "pointer" }}>✏️ 글쓰기</button>
       </div>
       <div style={{ display: "flex", gap: 6, overflowX: "auto", marginBottom: 12 }}>
         {["전체", "공지사항", "자유게시판", "스윙분석/질문방"].map(c => (
           <button key={c} onClick={() => setCat(c)} style={{
-            flexShrink: 0, padding: "4px 11px", borderRadius: 20, fontSize: 12, cursor: "pointer",
+            flexShrink: 0, padding: "4px 11px", borderRadius: 20, fontSize: 13, cursor: "pointer",
             fontWeight: cat === c ? 700 : 400, background: cat === c ? "#34d399" : "#1a1e28",
             color: cat === c ? "#000" : "#94a3b8", border: cat === c ? "none" : "1px solid #2d3347",
           }}>{c}</button>
@@ -2097,17 +2097,17 @@ function BoardScreen({ coaches, myPhone, adminPw, showToast }) {
           borderRadius: 10, padding: "10px 12px", marginBottom: 8, cursor: "pointer",
         }}>
           <div style={{ display: "flex", alignItems: "center", gap: 5, marginBottom: 5 }}>
-            <span style={{ fontSize: 10, padding: "2px 6px", borderRadius: 3, fontWeight: 700, background: (CAT_COLOR[p.카테고리] || "#94a3b8") + "22", color: CAT_COLOR[p.카테고리] || "#94a3b8", border: `1px solid ${(CAT_COLOR[p.카테고리] || "#94a3b8")}44` }}>{p.카테고리}</span>
-            {p.상단고정 && <span style={{ fontSize: 10, color: "#fbbf24" }}>📌</span>}
-            {p._isSecret && <span style={{ fontSize: 10, color: "#fbbf24" }}>🔒</span>}
+            <span style={{ fontSize: 11, padding: "2px 6px", borderRadius: 3, fontWeight: 700, background: (CAT_COLOR[p.카테고리] || "#94a3b8") + "22", color: CAT_COLOR[p.카테고리] || "#94a3b8", border: `1px solid ${(CAT_COLOR[p.카테고리] || "#94a3b8")}44` }}>{p.카테고리}</span>
+            {p.상단고정 && <span style={{ fontSize: 11, color: "#fbbf24" }}>📌</span>}
+            {p._isSecret && <span style={{ fontSize: 11, color: "#fbbf24" }}>🔒</span>}
           </div>
-          <div style={{ fontSize: 13, fontWeight: 700, marginBottom: 3 }}>{p.제목}</div>
-          {p.내용 && !p._isSecret && <div style={{ fontSize: 11, color: "#94a3b8", lineHeight: 1.5, marginBottom: 5 }}>{String(p.내용).slice(0, 60)}{p.내용.length > 60 ? "..." : ""}</div>}
+          <div style={{ fontSize: 14, fontWeight: 700, marginBottom: 3 }}>{p.제목}</div>
+          {p.내용 && !p._isSecret && <div style={{ fontSize: 12, color: "#94a3b8", lineHeight: 1.5, marginBottom: 5 }}>{String(p.내용).slice(0, 60)}{p.내용.length > 60 ? "..." : ""}</div>}
           <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-            <span style={{ fontSize: 11, color: "#4b5675" }}>{p.익명여부 ? "익명" : p.작성자} · {p.작성일시?.slice(5, 10)}</span>
+            <span style={{ fontSize: 12, color: "#4b5675" }}>{p.익명여부 ? "익명" : p.작성자} · {p.작성일시?.slice(5, 10)}</span>
             <div style={{ display: "flex", gap: 8, marginLeft: "auto" }}>
-              <span style={{ fontSize: 11, color: p.likedByMe ? "#38bdf8" : "#4b5675" }}>👍 {p.좋아요수 || 0}</span>
-              <span style={{ fontSize: 11, color: "#4b5675" }}>💬 {p.commentCount || 0}</span>
+              <span style={{ fontSize: 12, color: p.likedByMe ? "#38bdf8" : "#4b5675" }}>👍 {p.좋아요수 || 0}</span>
+              <span style={{ fontSize: 12, color: "#4b5675" }}>💬 {p.commentCount || 0}</span>
             </div>
           </div>
         </div>
@@ -2294,12 +2294,12 @@ function AdminTimeline({ coaches, adminPw, showToast }) {
           display:"flex", alignItems:"center", gap:8, padding:"8px 12px",
         }}>
           <button onClick={() => setSelDate(d => tl_addDays(d,-1))}
-            style={{ background:"none", border:"none", color:"#94a3b8", fontSize: 19, cursor:"pointer" }}>‹</button>
-          <div style={{ fontWeight:700, fontSize: 14, minWidth:160, textAlign:"center" }}>{tl_fmtKR(selDate)}</div>
+            style={{ background:"none", border:"none", color:"#94a3b8", fontSize: 20, cursor:"pointer" }}>‹</button>
+          <div style={{ fontWeight:700, fontSize: 15, minWidth:160, textAlign:"center" }}>{tl_fmtKR(selDate)}</div>
           <button onClick={() => setSelDate(d => tl_addDays(d,1))}
-            style={{ background:"none", border:"none", color:"#94a3b8", fontSize: 19, cursor:"pointer" }}>›</button>
+            style={{ background:"none", border:"none", color:"#94a3b8", fontSize: 20, cursor:"pointer" }}>›</button>
           <button onClick={() => setSelDate(tl_todayStr())}
-            style={{ fontSize: 11, padding:"3px 8px", borderRadius:5, background:"#1a1e28", border:"1px solid #2d3347", color:"#94a3b8", cursor:"pointer" }}>오늘</button>
+            style={{ fontSize: 12, padding:"3px 8px", borderRadius:5, background:"#1a1e28", border:"1px solid #2d3347", color:"#94a3b8", cursor:"pointer" }}>오늘</button>
           <div style={{ display:"flex", gap:6, marginLeft:"auto" }}>
             {[
               {label:"예약", val:stats?.totalBookings??"-", color:"#34d399"},
@@ -2307,13 +2307,13 @@ function AdminTimeline({ coaches, adminPw, showToast }) {
               {label:"노쇼", val:stats?.noShowBookings??"-",color:"#f87171"},
             ].map(s => (
               <div key={s.label} style={{ background:"#181c25", border:"1px solid #2d3347", borderRadius:7, padding:"4px 10px", textAlign:"center" }}>
-                <div style={{ fontSize: 15, fontWeight:900, color:s.color, fontFamily:"monospace" }}>{s.val}</div>
-                <div style={{ fontSize: 10, color:"#4b5675" }}>{s.label}</div>
+                <div style={{ fontSize: 16, fontWeight:900, color:s.color, fontFamily:"monospace" }}>{s.val}</div>
+                <div style={{ fontSize: 11, color:"#4b5675" }}>{s.label}</div>
               </div>
             ))}
           </div>
-          <button onClick={load} style={{ background:"none", border:"1px solid #2d3347", borderRadius:6, color:"#94a3b8", fontSize: 14, padding:"4px 8px", cursor:"pointer" }}>🔄</button>
-          {loading && <div style={{ fontSize: 11, color:"#34d399" }}>⏳</div>}
+          <button onClick={load} style={{ background:"none", border:"1px solid #2d3347", borderRadius:6, color:"#94a3b8", fontSize: 15, padding:"4px 8px", cursor:"pointer" }}>🔄</button>
+          {loading && <div style={{ fontSize: 12, color:"#34d399" }}>⏳</div>}
         </div>
 
         {/* 프로 헤더 + 타임라인 */}
@@ -2332,7 +2332,7 @@ function AdminTimeline({ coaches, adminPw, showToast }) {
                 <div key={i} style={{
                   height:SLOT_H, borderBottom:`1px solid ${isHour?"#1f2435":"#0f111a"}`,
                   display:"flex", alignItems:"flex-start", padding:"2px 6px 0",
-                  fontFamily:"monospace", fontSize: 10,
+                  fontFamily:"monospace", fontSize: 11,
                   color: isHour ? "#4b5675" : "transparent",
                 }}>{`${tl_pad(h)}:00`}</div>
               );
@@ -2355,16 +2355,16 @@ function AdminTimeline({ coaches, adminPw, showToast }) {
                     width:28, height:28, borderRadius:"50%", flexShrink:0,
                     background:"#1f2435", border:`1.5px solid ${coach.color||"#34d399"}`,
                     display:"flex", alignItems:"center", justifyContent:"center",
-                    fontSize: 15, overflow:"hidden",
+                    fontSize: 16, overflow:"hidden",
                   }}>
                     {coach.image ? <img src={coach.image} alt="" style={{width:"100%",height:"100%",objectFit:"cover"}}/> : coach.icon||"🏌️"}
                   </div>
                   <div style={{flex:1}}>
-                    <div style={{fontSize: 12,fontWeight:700}}>{coach.name}</div>
-                    <div style={{fontSize: 10,color:"#4b5675"}}>{coach.title}</div>
+                    <div style={{fontSize: 13,fontWeight:700}}>{coach.name}</div>
+                    <div style={{fontSize: 11,color:"#4b5675"}}>{coach.title}</div>
                   </div>
                   <div style={{
-                    fontSize: 10, padding:"2px 6px", borderRadius:4, fontWeight:700,
+                    fontSize: 11, padding:"2px 6px", borderRadius:4, fontWeight:700,
                     background:`${coach.color||"#34d399"}22`, color:coach.color||"#34d399",
                   }}>{activeCnt}건</div>
                 </div>
@@ -2388,7 +2388,7 @@ function AdminTimeline({ coaches, adminPw, showToast }) {
                         <div style={{
                           position:"absolute", inset:0, display:"flex",
                           alignItems:"center", justifyContent:"center",
-                          opacity:0, fontSize: 19, color:"#2d3347",
+                          opacity:0, fontSize: 20, color:"#2d3347",
                           transition:"opacity .15s",
                         }}
                           onMouseEnter={e => e.currentTarget.style.opacity=1}
@@ -2424,16 +2424,16 @@ function AdminTimeline({ coaches, adminPw, showToast }) {
                         onMouseEnter={e => e.currentTarget.style.transform="translateX(2px)"}
                         onMouseLeave={e => e.currentTarget.style.transform="translateX(0)"}
                       >
-                        <div style={{fontSize: 9,color:"#4b5675",fontFamily:"monospace",marginBottom:2}}>
+                        <div style={{fontSize: 10,color:"#4b5675",fontFamily:"monospace",marginBottom:2}}>
                           {rawTime}~{tl_calcEnd(rawTime,b["레슨종류"])}
                         </div>
-                        <div style={{fontSize: 12,fontWeight:700,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>
+                        <div style={{fontSize: 13,fontWeight:700,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>
                           {b["수강생명"]}
                         </div>
-                        {ht > 36 && <div style={{fontSize: 10,color:"#94a3b8",marginTop:1}}>{b["레슨종류"]}</div>}
+                        {ht > 36 && <div style={{fontSize: 11,color:"#94a3b8",marginTop:1}}>{b["레슨종류"]}</div>}
                         <div style={{
                           position:"absolute", top:4, right:5,
-                          fontSize: 9, padding:"1px 4px", borderRadius:3, fontWeight:700,
+                          fontSize: 10, padding:"1px 4px", borderRadius:3, fontWeight:700,
                           background:`${sc}33`, color:sc,
                         }}>{b["상태"]}</div>
                       </div>
@@ -2468,11 +2468,11 @@ function AdminTimeline({ coaches, adminPw, showToast }) {
         }}>
           {/* 패널 헤더 */}
           <div style={{ padding:"12px 14px", borderBottom:"1px solid #1f2435", display:"flex", alignItems:"center", justifyContent:"space-between" }}>
-            <div style={{ fontSize: 14, fontWeight:700 }}>
+            <div style={{ fontSize: 15, fontWeight:700 }}>
               {selSlot.booking ? "📋 예약 상세" : "➕ 대행 예약"}
             </div>
             <button onClick={() => setSelSlot(null)}
-              style={{ background:"none", border:"none", color:"#4b5675", fontSize: 17, cursor:"pointer" }}>✕</button>
+              style={{ background:"none", border:"none", color:"#4b5675", fontSize: 18, cursor:"pointer" }}>✕</button>
           </div>
 
           {/* 탭 (예약 있을 때만) */}
@@ -2480,7 +2480,7 @@ function AdminTimeline({ coaches, adminPw, showToast }) {
             <div style={{ display:"flex", gap:4, padding:"8px 14px", borderBottom:"1px solid #1f2435" }}>
               {["detail","book"].map(t => (
                 <button key={t} onClick={() => setPanelTab(t)} style={{
-                  flex:1, padding:"5px 0", borderRadius:7, fontSize: 11, cursor:"pointer",
+                  flex:1, padding:"5px 0", borderRadius:7, fontSize: 12, cursor:"pointer",
                   fontWeight: panelTab===t ? 700 : 400,
                   background: panelTab===t ? "#34d399" : "#1a1e28",
                   color: panelTab===t ? "#000" : "#94a3b8",
@@ -2495,14 +2495,14 @@ function AdminTimeline({ coaches, adminPw, showToast }) {
 
             {/* 슬롯 정보 */}
             <div style={{ background:"#181c25", border:"1px solid #2d3347", borderRadius:8, padding:"10px 12px", marginBottom:12 }}>
-              <div style={{ fontSize: 10, fontWeight:700, letterSpacing:1, color:"#4b5675", marginBottom:6, textTransform:"uppercase" }}>슬롯 정보</div>
-              <div style={{ display:"flex", justifyContent:"space-between", fontSize: 12, marginBottom:3 }}>
+              <div style={{ fontSize: 11, fontWeight:700, letterSpacing:1, color:"#4b5675", marginBottom:6, textTransform:"uppercase" }}>슬롯 정보</div>
+              <div style={{ display:"flex", justifyContent:"space-between", fontSize: 13, marginBottom:3 }}>
                 <span style={{ color:"#4b5675" }}>프로</span><span style={{ fontWeight:700 }}>{selSlot.coach.name}</span>
               </div>
-              <div style={{ display:"flex", justifyContent:"space-between", fontSize: 12, marginBottom:3 }}>
+              <div style={{ display:"flex", justifyContent:"space-between", fontSize: 13, marginBottom:3 }}>
                 <span style={{ color:"#4b5675" }}>날짜</span><span>{selDate}</span>
               </div>
-              <div style={{ display:"flex", justifyContent:"space-between", fontSize: 12 }}>
+              <div style={{ display:"flex", justifyContent:"space-between", fontSize: 13 }}>
                 <span style={{ color:"#4b5675" }}>시간</span>
                 <span style={{ fontWeight:700, color:"#34d399", fontFamily:"monospace" }}>{selSlot.time}</span>
               </div>
@@ -2512,7 +2512,7 @@ function AdminTimeline({ coaches, adminPw, showToast }) {
             {(!selSlot.booking || panelTab==="detail") && selSlot.booking && (
               <div>
                 <div style={{ background:"#181c25", border:"1px solid #2d3347", borderRadius:8, padding:"10px 12px", marginBottom:12 }}>
-                  <div style={{ fontSize: 10, fontWeight:700, letterSpacing:1, color:"#4b5675", marginBottom:6, textTransform:"uppercase" }}>수강생</div>
+                  <div style={{ fontSize: 11, fontWeight:700, letterSpacing:1, color:"#4b5675", marginBottom:6, textTransform:"uppercase" }}>수강생</div>
                   {[
                     ["이름",   selSlot.booking["수강생명"]],
                     ["연락처", selSlot.booking["연락처"]],
@@ -2520,13 +2520,13 @@ function AdminTimeline({ coaches, adminPw, showToast }) {
                     ["부스",   (selSlot.booking["부스번호"]||"-")+"번"],
                     ["상태",   selSlot.booking["상태"]],
                   ].map(([k,v]) => (
-                    <div key={k} style={{ display:"flex", justifyContent:"space-between", fontSize: 12, marginBottom:4 }}>
+                    <div key={k} style={{ display:"flex", justifyContent:"space-between", fontSize: 13, marginBottom:4 }}>
                       <span style={{ color:"#4b5675" }}>{k}</span>
                       <span style={{ fontWeight:600, color: k==="상태" ? (statusColor[v]||"#94a3b8") : "#e2e8f0" }}>{v}</span>
                     </div>
                   ))}
                   {selSlot.booking["요청사항"] && (
-                    <div style={{ fontSize: 11, color:"#94a3b8", marginTop:6, paddingTop:6, borderTop:"1px solid #1f2435" }}>
+                    <div style={{ fontSize: 12, color:"#94a3b8", marginTop:6, paddingTop:6, borderTop:"1px solid #1f2435" }}>
                       💬 {selSlot.booking["요청사항"]}
                     </div>
                   )}
@@ -2535,7 +2535,7 @@ function AdminTimeline({ coaches, adminPw, showToast }) {
                 {/* 출석 버튼 */}
                 {selSlot.booking["상태"]==="예약" && (
                   <div>
-                    <div style={{ fontSize: 10, fontWeight:700, letterSpacing:1, color:"#4b5675", marginBottom:8, textTransform:"uppercase" }}>출석 처리</div>
+                    <div style={{ fontSize: 11, fontWeight:700, letterSpacing:1, color:"#4b5675", marginBottom:8, textTransform:"uppercase" }}>출석 처리</div>
                     {[
                       ["출석완료","#34d399","✅"],
                       ["지각출석","#fbbf24","⏰"],
@@ -2544,7 +2544,7 @@ function AdminTimeline({ coaches, adminPw, showToast }) {
                       <button key={s} onClick={() => doAttend(s)} style={{
                         width:"100%", border:`1px solid ${c}44`,
                         background:`${c}18`, color:c, borderRadius:7,
-                        padding:"8px 0", fontSize: 12, fontWeight:700,
+                        padding:"8px 0", fontSize: 13, fontWeight:700,
                         cursor:"pointer", marginBottom:5,
                         fontFamily:"'Noto Sans KR', sans-serif",
                         transition:"all .15s",
@@ -2557,7 +2557,7 @@ function AdminTimeline({ coaches, adminPw, showToast }) {
                     <button onClick={doCancel} style={{
                       width:"100%", border:"1px solid rgba(248,113,113,.3)",
                       background:"rgba(248,113,113,.1)", color:"#f87171", borderRadius:7,
-                      padding:"7px 0", fontSize: 11, cursor:"pointer",
+                      padding:"7px 0", fontSize: 12, cursor:"pointer",
                       fontFamily:"'Noto Sans KR', sans-serif",
                     }}>❌ 예약 취소</button>
                   </div>
@@ -2568,28 +2568,28 @@ function AdminTimeline({ coaches, adminPw, showToast }) {
             {/* 대행 예약 탭 */}
             {(!selSlot.booking || panelTab==="book") && (
               <div>
-                <div style={{ fontSize: 10, fontWeight:700, letterSpacing:1, color:"#4b5675", marginBottom:10, textTransform:"uppercase" }}>수강생 정보</div>
+                <div style={{ fontSize: 11, fontWeight:700, letterSpacing:1, color:"#4b5675", marginBottom:10, textTransform:"uppercase" }}>수강생 정보</div>
                 {[
                   { label:"이름 *",  val:bkName,   set:setBkName,   ph:"이름",              type:"text" },
                   { label:"연락처 *",val:bkPhone,  set:setBkPhone,  ph:"010-0000-0000",     type:"tel"  },
                   { label:"요청사항",val:bkNote,   set:setBkNote,   ph:"요청사항 (선택)",   type:"text" },
                 ].map(f => (
                   <div key={f.label} style={{ marginBottom:8 }}>
-                    <div style={{ fontSize: 10, color:"#4b5675", marginBottom:3 }}>{f.label}</div>
+                    <div style={{ fontSize: 11, color:"#4b5675", marginBottom:3 }}>{f.label}</div>
                     <input value={f.val} onChange={e => f.set(e.target.value)}
                       placeholder={f.ph} type={f.type}
-                      style={{ ...INP, fontSize: 12 }} />
+                      style={{ ...INP, fontSize: 13 }} />
                   </div>
                 ))}
                 <div style={{ marginBottom:12 }}>
-                  <div style={{ fontSize: 10, color:"#4b5675", marginBottom:3 }}>레슨 종류 *</div>
+                  <div style={{ fontSize: 11, color:"#4b5675", marginBottom:3 }}>레슨 종류 *</div>
                   <div style={{ display:"flex", flexWrap:"wrap", gap:4 }}>
                     {(tlLessons.length > 0 ? tlLessons : []).map(l => {
                       const color = l["색상"] || "#34d399";
                       const isSel = bkLesson === l["레슨명"];
                       return (
                         <button key={l["레슨ID"]} onClick={() => setBkLesson(l["레슨명"])} style={{
-                          padding:"4px 8px", borderRadius:5, fontSize: 11, cursor:"pointer",
+                          padding:"4px 8px", borderRadius:5, fontSize: 12, cursor:"pointer",
                           fontWeight: isSel ? 700 : 400,
                           background: isSel ? color : "#1a1e28",
                           color: isSel ? "#000" : "#94a3b8",
@@ -2601,7 +2601,7 @@ function AdminTimeline({ coaches, adminPw, showToast }) {
                 </div>
                 <button onClick={doBook} disabled={bkSubmitting} style={{
                   width:"100%", background:"#34d399", border:"none",
-                  borderRadius:8, color:"#000", fontSize: 13, fontWeight:700,
+                  borderRadius:8, color:"#000", fontSize: 14, fontWeight:700,
                   padding:"9px 0", cursor:bkSubmitting?"not-allowed":"pointer",
                   opacity:bkSubmitting?.6:1,
                   fontFamily:"'Noto Sans KR', sans-serif",
@@ -2689,8 +2689,8 @@ function AdminScreen({ coaches, setCoaches, showToast, onLogin, theme, setTheme 
 
   if (!adminPw) return (
     <div style={{ padding: 40, textAlign: "center" }}>
-      <div style={{ fontSize: 41, marginBottom: 12 }}>⚙️</div>
-      <div style={{ fontSize: 15, fontWeight: 700, marginBottom: 16 }}>관리자 로그인</div>
+      <div style={{ fontSize: 42, marginBottom: 12 }}>⚙️</div>
+      <div style={{ fontSize: 16, fontWeight: 700, marginBottom: 16 }}>관리자 로그인</div>
       <input type="password" placeholder="관리자 비밀번호" value={pw}
         onChange={e => setPw(e.target.value)}
         onKeyDown={e => e.key === "Enter" && handleLogin()}
@@ -2726,22 +2726,22 @@ function AdminScreen({ coaches, setCoaches, showToast, onLogin, theme, setTheme 
   return (
     <div style={{ padding: adminTab === "timeline" ? "12px 14px 0" : "12px 14px" }}>
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 10 }}>
-        <div style={{ fontSize: 16, fontWeight: 900 }}>
+        <div style={{ fontSize: 17, fontWeight: 900 }}>
           ⚙️ 관리자
-          {isPC && <span style={{ fontSize: 11, color:"#34d399", marginLeft:8, padding:"2px 6px", border:"1px solid rgba(52,211,153,.3)", borderRadius:4 }}>PC 모드</span>}
+          {isPC && <span style={{ fontSize: 12, color:"#34d399", marginLeft:8, padding:"2px 6px", border:"1px solid rgba(52,211,153,.3)", borderRadius:4 }}>PC 모드</span>}
         </div>
         <div style={{ display: "flex", gap: 8 }}>
           <button onClick={() => loadData(adminPw, adminTab)}
-            style={{ fontSize: 12, background: "none", border: "none", color: "#94a3b8", cursor: "pointer" }}>🔄</button>
+            style={{ fontSize: 13, background: "none", border: "none", color: "#94a3b8", cursor: "pointer" }}>🔄</button>
           <button onClick={() => { setAdminPw(""); setPw(""); setStats(null); if(onLogin) onLogin(""); }}
-            style={{ fontSize: 12, background: "none", border: "none", color: "#f87171", cursor: "pointer" }}>로그아웃</button>
+            style={{ fontSize: 13, background: "none", border: "none", color: "#f87171", cursor: "pointer" }}>로그아웃</button>
         </div>
       </div>
 
       <div style={{ display: "flex", gap: 5, marginBottom: adminTab === "timeline" ? 0 : 14, overflowX:"auto" }}>
         {TABS.map(t => (
           <button key={t.id} onClick={() => setAdminTab(t.id)} style={{
-            flexShrink:0, padding: "6px 10px", borderRadius: 8, fontSize: 12, cursor: "pointer",
+            flexShrink:0, padding: "6px 10px", borderRadius: 8, fontSize: 13, cursor: "pointer",
             fontWeight: adminTab === t.id ? 700 : 400,
             background: adminTab === t.id ? "#34d399" : "#1a1e28",
             color: adminTab === t.id ? "#000" : "#94a3b8",
@@ -2765,20 +2765,20 @@ function AdminScreen({ coaches, setCoaches, showToast, onLogin, theme, setTheme 
 function AdminDash({ stats, loading, error, onRetry }) {
   if (loading) return (
     <div style={{ textAlign: "center", padding: 40 }}>
-      <div style={{ fontSize: 14, color: "#94a3b8", marginBottom: 8 }}>⏳ 데이터 불러오는 중...</div>
-      <div style={{ fontSize: 12, color: "#4b5675" }}>GAS 서버 응답을 기다리는 중입니다.</div>
+      <div style={{ fontSize: 15, color: "#94a3b8", marginBottom: 8 }}>⏳ 데이터 불러오는 중...</div>
+      <div style={{ fontSize: 13, color: "#4b5675" }}>GAS 서버 응답을 기다리는 중입니다.</div>
     </div>
   );
   if (error) return (
     <div style={{ textAlign: "center", padding: 30 }}>
-      <div style={{ fontSize: 14, color: "#f87171", marginBottom: 8 }}>❌ 로딩 실패</div>
-      <div style={{ fontSize: 12, color: "#94a3b8", marginBottom: 14 }}>{error}</div>
+      <div style={{ fontSize: 15, color: "#f87171", marginBottom: 8 }}>❌ 로딩 실패</div>
+      <div style={{ fontSize: 13, color: "#94a3b8", marginBottom: 14 }}>{error}</div>
       <Btn onClick={onRetry} style={{ maxWidth: 160, margin: "0 auto" }}>🔄 다시 시도</Btn>
     </div>
   );
   if (!stats) return (
     <div style={{ textAlign: "center", padding: 30 }}>
-      <div style={{ fontSize: 14, color: "#94a3b8", marginBottom: 8 }}>데이터가 없습니다.</div>
+      <div style={{ fontSize: 15, color: "#94a3b8", marginBottom: 8 }}>데이터가 없습니다.</div>
       <Btn onClick={onRetry} style={{ maxWidth: 160, margin: "0 auto" }}>🔄 불러오기</Btn>
     </div>
   );
@@ -2791,19 +2791,19 @@ function AdminDash({ stats, loading, error, onRetry }) {
   ];
   return (
     <div>
-      <div style={{ fontSize: 11, color: "#4b5675", marginBottom: 8, textAlign: "right" }}>
+      <div style={{ fontSize: 12, color: "#4b5675", marginBottom: 8, textAlign: "right" }}>
         {stats.date || "오늘"} 기준
       </div>
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, marginBottom: 12 }}>
         {cards.map(c => (
           <div key={c.label} style={CARD_STYLE}>
-            <div style={{ fontSize: 23, fontWeight: 900, color: c.color }}>{c.value}</div>
-            <div style={{ fontSize: 11, color: "#94a3b8", marginTop: 2 }}>{c.label}</div>
+            <div style={{ fontSize: 24, fontWeight: 900, color: c.color }}>{c.value}</div>
+            <div style={{ fontSize: 12, color: "#94a3b8", marginTop: 2 }}>{c.label}</div>
           </div>
         ))}
       </div>
       {stats.pendingReports > 0 && (
-        <div style={{ background: "rgba(248,113,113,.1)", border: "1px solid rgba(248,113,113,.3)", borderRadius: 10, padding: 10, fontSize: 13, color: "#f87171" }}>
+        <div style={{ background: "rgba(248,113,113,.1)", border: "1px solid rgba(248,113,113,.3)", borderRadius: 10, padding: 10, fontSize: 14, color: "#f87171" }}>
           🔴 미처리 신고 {stats.pendingReports}건
         </div>
       )}
@@ -2816,16 +2816,16 @@ function AdminAttendTab({ list, adminPw, showToast, onDone }) {
     try { await apiPost({ action: "checkAttend", bookingId, status, password: adminPw }); showToast(`✅ ${status} 처리`); onDone(); }
     catch (e) { showToast("❌ " + e.message); }
   };
-  if (!list.length) return <div style={{ color: "#4b5675", textAlign: "center", fontSize: 13, padding: 20 }}>오늘 예약이 없습니다.</div>;
+  if (!list.length) return <div style={{ color: "#4b5675", textAlign: "center", fontSize: 14, padding: 20 }}>오늘 예약이 없습니다.</div>;
   return list.map(b => (
     <div key={b.예약ID} style={{ ...CARD_STYLE, display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
       <div style={{ flex: 1 }}>
-        <div style={{ fontSize: 13, fontWeight: 700 }}>{b.수강생명}</div>
-        <div style={{ fontSize: 11, color: "#94a3b8" }}>{b.프로명} · {b.시작시간} · {b.레슨종류}</div>
+        <div style={{ fontSize: 14, fontWeight: 700 }}>{b.수강생명}</div>
+        <div style={{ fontSize: 12, color: "#94a3b8" }}>{b.프로명} · {b.시작시간} · {b.레슨종류}</div>
       </div>
       <div style={{ display: "flex", gap: 4 }}>
         {[["출석완료", "#34d399", "✅"], ["지각출석", "#fbbf24", "⏰"], ["노쇼", "#f87171", "🚫"]].map(([s, c, ic]) => (
-          <button key={s} onClick={() => doAttend(b.예약ID, s)} style={{ padding: "3px 7px", borderRadius: 5, border: `1px solid ${c}44`, background: `${c}22`, color: c, fontSize: 10, cursor: "pointer" }}>{ic}</button>
+          <button key={s} onClick={() => doAttend(b.예약ID, s)} style={{ padding: "3px 7px", borderRadius: 5, border: `1px solid ${c}44`, background: `${c}22`, color: c, fontSize: 11, cursor: "pointer" }}>{ic}</button>
         ))}
       </div>
     </div>
@@ -2960,7 +2960,7 @@ function AdminProTab({ list, adminPw, showToast, onDone, setCoaches }) {
       {/* 등록 / 수정 폼 */}
       {showForm && (
         <div style={{ ...CARD_STYLE, marginBottom: 14 }}>
-          <div style={{ fontSize: 13, fontWeight: 700, marginBottom: 12, color: "#34d399" }}>
+          <div style={{ fontSize: 14, fontWeight: 700, marginBottom: 12, color: "#34d399" }}>
             {editPro ? `✏️ ${editPro.name} 수정` : "➕ 새 프로 등록"}
           </div>
 
@@ -2972,7 +2972,7 @@ function AdminProTab({ list, adminPw, showToast, onDone, setCoaches }) {
                 width: 64, height: 64, borderRadius: "50%", flexShrink: 0,
                 background: "#1f2435", border: `2px solid ${form.color || "#34d399"}`,
                 display: "flex", alignItems: "center", justifyContent: "center",
-                overflow: "hidden", fontSize: 29,
+                overflow: "hidden", fontSize: 30,
               }}>
                 {imgPreview
                   ? <img src={imgPreview} alt="preview"
@@ -2983,8 +2983,8 @@ function AdminProTab({ list, adminPw, showToast, onDone, setCoaches }) {
                 }
               </div>
               <div style={{ flex: 1 }}>
-                <div style={{ fontSize: 12, fontWeight: 700, marginBottom: 4 }}>프로필 사진</div>
-                <div style={{ fontSize: 11, color: "#4b5675", lineHeight: 1.6 }}>
+                <div style={{ fontSize: 13, fontWeight: 700, marginBottom: 4 }}>프로필 사진</div>
+                <div style={{ fontSize: 12, color: "#4b5675", lineHeight: 1.6 }}>
                   Google Drive에 사진을 올린 후<br/>공유 링크를 아래에 붙여넣으세요
                 </div>
               </div>
@@ -2995,11 +2995,11 @@ function AdminProTab({ list, adminPw, showToast, onDone, setCoaches }) {
               placeholder="Google Drive 공유 URL 붙여넣기"
               value={form.profileImg}
               onChange={e => handleImgUrl(e.target.value)}
-              style={{ ...INP, marginBottom: 4, fontSize: 12 }}
+              style={{ ...INP, marginBottom: 4, fontSize: 13 }}
             />
             {form.profileImg && (
               <button onClick={() => { setImgPreview(""); setForm(p => ({ ...p, profileImg: "" })); }}
-                style={{ fontSize: 11, color: "#f87171", background: "none", border: "none", cursor: "pointer" }}>
+                style={{ fontSize: 12, color: "#f87171", background: "none", border: "none", cursor: "pointer" }}>
                 ✕ URL 제거
               </button>
             )}
@@ -3008,7 +3008,7 @@ function AdminProTab({ list, adminPw, showToast, onDone, setCoaches }) {
             <div style={{
               marginTop: 8, padding: "8px 10px",
               background: "rgba(56,189,248,.06)", border: "1px solid rgba(56,189,248,.15)",
-              borderRadius: 8, fontSize: 11, color: "#94a3b8", lineHeight: 1.7,
+              borderRadius: 8, fontSize: 12, color: "#94a3b8", lineHeight: 1.7,
             }}>
               📌 <span style={{ color: "#38bdf8", fontWeight: 700 }}>Google Drive 사용법</span><br/>
               1. drive.google.com 접속<br/>
@@ -3032,15 +3032,15 @@ function AdminProTab({ list, adminPw, showToast, onDone, setCoaches }) {
 
           {/* 레슨 운영 시간 */}
           <div style={{ marginBottom: 12 }}>
-            <div style={{ fontSize: 11, fontWeight: 700, color: "#4b5675", marginBottom: 8, letterSpacing:.5 }}>
+            <div style={{ fontSize: 12, fontWeight: 700, color: "#4b5675", marginBottom: 8, letterSpacing:.5 }}>
               ⏰ 레슨 운영 시간
             </div>
             <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
               <div style={{ flex: 1 }}>
-                <div style={{ fontSize: 10, color: "#4b5675", marginBottom: 3 }}>시작</div>
+                <div style={{ fontSize: 11, color: "#4b5675", marginBottom: 3 }}>시작</div>
                 <select value={form.startHour}
                   onChange={e => setForm(p => ({ ...p, startHour: Number(e.target.value) }))}
-                  style={{ ...INP, fontSize: 13 }}>
+                  style={{ ...INP, fontSize: 14 }}>
                   {Array.from({ length: 16 }, (_, i) => i + 6).map(h => (
                     <option key={h} value={h}>{String(h).padStart(2,"0")}:00</option>
                   ))}
@@ -3048,28 +3048,28 @@ function AdminProTab({ list, adminPw, showToast, onDone, setCoaches }) {
               </div>
               <div style={{ color: "#4b5675", paddingTop: 14 }}>~</div>
               <div style={{ flex: 1 }}>
-                <div style={{ fontSize: 10, color: "#4b5675", marginBottom: 3 }}>종료</div>
+                <div style={{ fontSize: 11, color: "#4b5675", marginBottom: 3 }}>종료</div>
                 <select value={form.endHour}
                   onChange={e => setForm(p => ({ ...p, endHour: Number(e.target.value) }))}
-                  style={{ ...INP, fontSize: 13 }}>
+                  style={{ ...INP, fontSize: 14 }}>
                   {Array.from({ length: 16 }, (_, i) => i + 8).map(h => (
                     <option key={h} value={h}>{String(h).padStart(2,"0")}:00</option>
                   ))}
                 </select>
               </div>
             </div>
-            <div style={{ fontSize: 10, color: "#4b5675", marginTop: 4 }}>
+            <div style={{ fontSize: 11, color: "#4b5675", marginTop: 4 }}>
               20분 단위 슬롯 생성 기준 시간
             </div>
           </div>
 
           {/* 담당 레슨 종류 선택 */}
           <div style={{ marginBottom: 12 }}>
-            <div style={{ fontSize: 11, fontWeight: 700, color: "#4b5675", marginBottom: 4, letterSpacing:.5 }}>
+            <div style={{ fontSize: 12, fontWeight: 700, color: "#4b5675", marginBottom: 4, letterSpacing:.5 }}>
               📚 담당 레슨 종류 <span style={{ color:"#2d3347", fontWeight:400 }}>(미선택 시 전체 담당)</span>
             </div>
             {allLessons.length === 0 ? (
-              <div style={{ fontSize: 11, color:"#f87171", padding:"6px 8px", background:"rgba(248,113,113,.08)", borderRadius:6 }}>
+              <div style={{ fontSize: 12, color:"#f87171", padding:"6px 8px", background:"rgba(248,113,113,.08)", borderRadius:6 }}>
                 ⚠️ 레슨 종류를 먼저 📚 레슨종류 탭에서 등록해주세요.
               </div>
             ) : (
@@ -3082,7 +3082,7 @@ function AdminProTab({ list, adminPw, showToast, onDone, setCoaches }) {
                     <button key={l["레슨ID"]} type="button"
                       onClick={() => toggleLesson(l["레슨명"])}
                       style={{
-                        padding:"5px 10px", borderRadius:6, fontSize: 12, cursor:"pointer",
+                        padding:"5px 10px", borderRadius:6, fontSize: 13, cursor:"pointer",
                         fontWeight: isSel ? 700 : 400,
                         background: isSel ? color : "#1a1e28",
                         color: isSel ? "#000" : "#94a3b8",
@@ -3090,7 +3090,7 @@ function AdminProTab({ list, adminPw, showToast, onDone, setCoaches }) {
                         transition:"all .12s",
                       }}>
                       {isSel ? "✓ " : ""}{l["레슨명"]}
-                      <span style={{ fontSize: 9, opacity:.7, marginLeft:3 }}>{l["소요시간(분)"]}분</span>
+                      <span style={{ fontSize: 10, opacity:.7, marginLeft:3 }}>{l["소요시간(분)"]}분</span>
                     </button>
                   );
                 })}
@@ -3102,21 +3102,21 @@ function AdminProTab({ list, adminPw, showToast, onDone, setCoaches }) {
                       onClick={() => toggleLesson(name)}
                       title="DB에 없는 레슨 종류 — 저장 시 자동 제거됩니다"
                       style={{
-                        padding:"5px 10px", borderRadius:6, fontSize: 12, cursor:"pointer",
+                        padding:"5px 10px", borderRadius:6, fontSize: 13, cursor:"pointer",
                         background:"rgba(248,113,113,.1)",
                         color:"#f87171",
                         border:"1px solid rgba(248,113,113,.3)",
                         textDecoration:"line-through",
                         opacity:.7,
                       }}>
-                      ✕ {name} <span style={{ fontSize: 9 }}>미등록</span>
+                      ✕ {name} <span style={{ fontSize: 10 }}>미등록</span>
                     </button>
                   ))
                 }
               </div>
             )}
             {form.lessonTypes.length > 0 && (
-              <div style={{ fontSize: 10, marginTop:5 }}>
+              <div style={{ fontSize: 11, marginTop:5 }}>
                 {(() => {
                   const valid   = form.lessonTypes.filter(n => allLessons.find(l=>l["레슨명"]===n));
                   const invalid = form.lessonTypes.filter(n => !allLessons.find(l=>l["레슨명"]===n));
@@ -3133,11 +3133,11 @@ function AdminProTab({ list, adminPw, showToast, onDone, setCoaches }) {
 
           {/* 테마 색상 */}
           <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 10 }}>
-            <div style={{ fontSize: 12, color: "#94a3b8" }}>테마 색상</div>
+            <div style={{ fontSize: 13, color: "#94a3b8" }}>테마 색상</div>
             <input type="color" value={form.color}
               onChange={e => setForm(p => ({ ...p, color: e.target.value }))}
               style={{ width: 40, height: 30, borderRadius: 6, border: "none", cursor: "pointer", background: "none" }} />
-            <div style={{ fontSize: 12, color: form.color, fontWeight: 700 }}>{form.color}</div>
+            <div style={{ fontSize: 13, color: form.color, fontWeight: 700 }}>{form.color}</div>
           </div>
 
           <div style={{ display: "flex", gap: 8 }}>
@@ -3161,7 +3161,7 @@ function AdminProTab({ list, adminPw, showToast, onDone, setCoaches }) {
             width: 44, height: 44, borderRadius: "50%", flexShrink: 0,
             background: "#1f2435", border: `2px solid ${p.color || "#34d399"}`,
             display: "flex", alignItems: "center", justifyContent: "center",
-            overflow: "hidden", fontSize: 21,
+            overflow: "hidden", fontSize: 22,
           }}>
             {p.image
               ? <img src={p.image} alt={p.name} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
@@ -3169,12 +3169,12 @@ function AdminProTab({ list, adminPw, showToast, onDone, setCoaches }) {
             }
           </div>
           <div style={{ flex: 1 }}>
-            <div style={{ fontSize: 13, fontWeight: 700 }}>{p.name}</div>
-            <div style={{ fontSize: 11, color: p.status === "active" ? "#94a3b8" : "#f87171" }}>
+            <div style={{ fontSize: 14, fontWeight: 700 }}>{p.name}</div>
+            <div style={{ fontSize: 12, color: p.status === "active" ? "#94a3b8" : "#f87171" }}>
               {p.title} · {p.status === "active" ? "활성" : "비활성"}
             </div>
             {(p.lessonTypes||[]).length > 0 && (
-              <div style={{ fontSize: 10, color:"#4b5675", marginTop:2 }}>
+              <div style={{ fontSize: 11, color:"#4b5675", marginTop:2 }}>
                 {p.lessonTypes.slice(0,3).join(" · ")}{p.lessonTypes.length > 3 ? " ..." : ""}
               </div>
             )}
@@ -3182,17 +3182,17 @@ function AdminProTab({ list, adminPw, showToast, onDone, setCoaches }) {
           <div style={{ display: "flex", gap: 4 }}>
             {/* 수정 버튼 */}
             <button onClick={() => startEdit(p)} style={{
-              padding: "3px 8px", borderRadius: 5, fontSize: 10, cursor: "pointer",
+              padding: "3px 8px", borderRadius: 5, fontSize: 11, cursor: "pointer",
               border: "1px solid rgba(56,189,248,.3)", background: "rgba(56,189,248,.1)", color: "#38bdf8",
             }}>수정</button>
             {/* 활성/비활성 버튼 */}
             {p.status === "active"
               ? <button onClick={() => deactivate(p.id, p.name)} style={{
-                  padding: "3px 8px", borderRadius: 5, fontSize: 10, cursor: "pointer",
+                  padding: "3px 8px", borderRadius: 5, fontSize: 11, cursor: "pointer",
                   border: "1px solid rgba(251,191,36,.3)", background: "rgba(251,191,36,.1)", color: "#fbbf24",
                 }}>비활성</button>
               : <button onClick={() => reactivate(p.id)} style={{
-                  padding: "3px 8px", borderRadius: 5, fontSize: 10, cursor: "pointer",
+                  padding: "3px 8px", borderRadius: 5, fontSize: 11, cursor: "pointer",
                   border: "1px solid rgba(52,211,153,.3)", background: "rgba(52,211,153,.1)", color: "#34d399",
                 }}>복구</button>
             }
@@ -3285,23 +3285,23 @@ function AdminStudentTab({ adminPw, showToast }) {
             value={keyword}
             onChange={e => setKeyword(e.target.value)}
             onKeyDown={e => e.key === "Enter" && search()}
-            style={{ ...INP, flex:1, fontSize: 12 }}
+            style={{ ...INP, flex:1, fontSize: 13 }}
           />
           <button onClick={search} style={{
             padding:"0 12px", borderRadius:8, background:"#34d399",
-            color:"#000", border:"none", fontWeight:700, fontSize: 12, cursor:"pointer",
+            color:"#000", border:"none", fontWeight:700, fontSize: 13, cursor:"pointer",
           }}>검색</button>
         </div>
 
         {/* 수강생 수 */}
-        <div style={{ fontSize: 11, color:"#4b5675" }}>
+        <div style={{ fontSize: 12, color:"#4b5675" }}>
           총 {students.length}명
         </div>
 
         {/* 목록 */}
         <div style={{ flex:1, overflowY:"auto" }}>
           {loading ? <Spinner /> : students.length === 0
-            ? <div style={{ color:"#4b5675", fontSize: 13, textAlign:"center", padding:20 }}>수강생이 없습니다.</div>
+            ? <div style={{ color:"#4b5675", fontSize: 14, textAlign:"center", padding:20 }}>수강생이 없습니다.</div>
             : students.map(s => (
               <div key={s.id} onClick={() => loadDetail(s)} style={{
                 padding:"9px 11px", borderRadius:9, marginBottom:5, cursor:"pointer",
@@ -3310,15 +3310,15 @@ function AdminStudentTab({ adminPw, showToast }) {
                 transition:"all .12s",
               }}>
                 <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:3 }}>
-                  <span style={{ fontSize: 13, fontWeight:700 }}>{s.name}</span>
+                  <span style={{ fontSize: 14, fontWeight:700 }}>{s.name}</span>
                   {s.passCount > 0 && (
-                    <span style={{ fontSize: 10, padding:"1px 5px", borderRadius:3, background:"rgba(52,211,153,.15)", color:"#34d399", border:"1px solid rgba(52,211,153,.3)" }}>
+                    <span style={{ fontSize: 11, padding:"1px 5px", borderRadius:3, background:"rgba(52,211,153,.15)", color:"#34d399", border:"1px solid rgba(52,211,153,.3)" }}>
                       수강권 {s.passCount}
                     </span>
                   )}
                 </div>
-                <div style={{ fontSize: 11, color:"#4b5675", fontFamily:"monospace" }}>{s.phone}</div>
-                <div style={{ fontSize: 10, color:"#4b5675", marginTop:2 }}>{s.grade} · {String(s.joinedAt||"").slice(0,10)} 등록</div>
+                <div style={{ fontSize: 12, color:"#4b5675", fontFamily:"monospace" }}>{s.phone}</div>
+                <div style={{ fontSize: 11, color:"#4b5675", marginTop:2 }}>{s.grade} · {String(s.joinedAt||"").slice(0,10)} 등록</div>
               </div>
             ))
           }
@@ -3328,7 +3328,7 @@ function AdminStudentTab({ adminPw, showToast }) {
       {/* 오른쪽: 수강생 상세 */}
       <div style={{ flex:1, overflowY:"auto" }}>
         {!selStudent ? (
-          <div style={{ display:"flex", alignItems:"center", justifyContent:"center", height:"100%", color:"#4b5675", fontSize: 14 }}>
+          <div style={{ display:"flex", alignItems:"center", justifyContent:"center", height:"100%", color:"#4b5675", fontSize: 15 }}>
             왼쪽에서 수강생을 선택하세요
           </div>
         ) : detailLoading ? <Spinner /> : detail ? (
@@ -3341,24 +3341,24 @@ function AdminStudentTab({ adminPw, showToast }) {
               display:"flex", alignItems:"center", justifyContent:"space-between",
             }}>
               <div>
-                <div style={{ fontSize: 17, fontWeight:900, marginBottom:4 }}>{detail.student["이름"]}</div>
-                <div style={{ fontSize: 12, color:"#94a3b8", fontFamily:"monospace" }}>{detail.student["연락처"]}</div>
-                <div style={{ fontSize: 11, color:"#4b5675", marginTop:2 }}>
+                <div style={{ fontSize: 18, fontWeight:900, marginBottom:4 }}>{detail.student["이름"]}</div>
+                <div style={{ fontSize: 13, color:"#94a3b8", fontFamily:"monospace" }}>{detail.student["연락처"]}</div>
+                <div style={{ fontSize: 12, color:"#4b5675", marginTop:2 }}>
                   {detail.student["회원등급"]} · {String(detail.student["등록일시"]||"").slice(0,10)} 등록
                 </div>
               </div>
               <div style={{ textAlign:"right" }}>
-                <div style={{ fontSize: 23, fontWeight:900, color:"#34d399" }}>{detail.passes?.filter(p=>p["상태"]==="활성").length || 0}</div>
-                <div style={{ fontSize: 11, color:"#4b5675" }}>활성 수강권</div>
+                <div style={{ fontSize: 24, fontWeight:900, color:"#34d399" }}>{detail.passes?.filter(p=>p["상태"]==="활성").length || 0}</div>
+                <div style={{ fontSize: 12, color:"#4b5675" }}>활성 수강권</div>
               </div>
             </div>
 
             {/* 수강권 섹션 */}
             <div style={{ marginBottom:14 }}>
               <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:8 }}>
-                <div style={{ fontSize: 12, fontWeight:700, color:"#4b5675", letterSpacing:.8, textTransform:"uppercase" }}>🎫 수강권</div>
+                <div style={{ fontSize: 13, fontWeight:700, color:"#4b5675", letterSpacing:.8, textTransform:"uppercase" }}>🎫 수강권</div>
                 <button onClick={() => setShowIssue(!showIssue)} style={{
-                  fontSize: 11, padding:"4px 10px", borderRadius:6, cursor:"pointer",
+                  fontSize: 12, padding:"4px 10px", borderRadius:6, cursor:"pointer",
                   background:"rgba(52,211,153,.15)", border:"1px solid rgba(52,211,153,.3)", color:"#34d399", fontWeight:700,
                 }}>+ 수강권 발급</button>
               </div>
@@ -3366,13 +3366,13 @@ function AdminStudentTab({ adminPw, showToast }) {
               {/* 수강권 발급 폼 */}
               {showIssue && (
                 <div style={{ background:"#181c25", border:"1px solid rgba(52,211,153,.25)", borderRadius:10, padding:12, marginBottom:10 }}>
-                  <div style={{ fontSize: 12, fontWeight:700, color:"#34d399", marginBottom:10 }}>새 수강권 발급</div>
+                  <div style={{ fontSize: 13, fontWeight:700, color:"#34d399", marginBottom:10 }}>새 수강권 발급</div>
                   <div style={{ marginBottom:8 }}>
-                    <div style={{ fontSize: 10, color:"#4b5675", marginBottom:4 }}>수강권 종류</div>
+                    <div style={{ fontSize: 11, color:"#4b5675", marginBottom:4 }}>수강권 종류</div>
                     <div style={{ display:"flex", flexWrap:"wrap", gap:4 }}>
                       {PASS_TYPES.map(t => (
                         <button key={t} onClick={() => { setIssueType(t); setIssuePrice(String(PASS_PRICE[t])); }} style={{
-                          padding:"4px 8px", borderRadius:5, fontSize: 11, cursor:"pointer",
+                          padding:"4px 8px", borderRadius:5, fontSize: 12, cursor:"pointer",
                           fontWeight: issueType===t ? 700 : 400,
                           background: issueType===t ? "#34d399" : "#1a1e28",
                           color: issueType===t ? "#000" : "#94a3b8",
@@ -3383,26 +3383,26 @@ function AdminStudentTab({ adminPw, showToast }) {
                   </div>
                   <div style={{ display:"flex", gap:6, marginBottom:8 }}>
                     <div style={{ flex:1 }}>
-                      <div style={{ fontSize: 10, color:"#4b5675", marginBottom:3 }}>결제금액</div>
+                      <div style={{ fontSize: 11, color:"#4b5675", marginBottom:3 }}>결제금액</div>
                       <input value={issuePrice} onChange={e=>setIssuePrice(e.target.value)}
                         placeholder={String(PASS_PRICE[issueType])}
-                        style={{ ...INP, fontSize: 12 }} />
+                        style={{ ...INP, fontSize: 13 }} />
                     </div>
                     <div style={{ flex:1 }}>
-                      <div style={{ fontSize: 10, color:"#4b5675", marginBottom:3 }}>결제방법</div>
+                      <div style={{ fontSize: 11, color:"#4b5675", marginBottom:3 }}>결제방법</div>
                       <select value={issueMethod} onChange={e=>setIssueMethod(e.target.value)}
-                        style={{ ...INP, fontSize: 12 }}>
+                        style={{ ...INP, fontSize: 13 }}>
                         {PAY_METHODS.map(m => <option key={m}>{m}</option>)}
                       </select>
                     </div>
                   </div>
                   <div style={{ display:"flex", gap:6 }}>
                     <button onClick={() => setShowIssue(false)} style={{
-                      flex:1, padding:"7px 0", borderRadius:7, fontSize: 12, cursor:"pointer",
+                      flex:1, padding:"7px 0", borderRadius:7, fontSize: 13, cursor:"pointer",
                       background:"#1a1e28", border:"1px solid #2d3347", color:"#94a3b8",
                     }}>취소</button>
                     <button onClick={issuePass} disabled={issueSubmitting} style={{
-                      flex:2, padding:"7px 0", borderRadius:7, fontSize: 12, fontWeight:700, cursor:"pointer",
+                      flex:2, padding:"7px 0", borderRadius:7, fontSize: 13, fontWeight:700, cursor:"pointer",
                       background:"#34d399", border:"none", color:"#000",
                       opacity: issueSubmitting ? .6 : 1,
                     }}>{issueSubmitting ? "발급 중..." : "✅ 발급 완료"}</button>
@@ -3412,7 +3412,7 @@ function AdminStudentTab({ adminPw, showToast }) {
 
               {/* 보유 수강권 목록 */}
               {(detail.passes||[]).length === 0
-                ? <div style={{ color:"#4b5675", fontSize: 12, padding:"10px 0" }}>보유 수강권 없음</div>
+                ? <div style={{ color:"#4b5675", fontSize: 13, padding:"10px 0" }}>보유 수강권 없음</div>
                 : (detail.passes||[]).map(p => (
                   <div key={p["수강권ID"]} style={{
                     background: p["상태"]==="활성" ? "rgba(52,211,153,.06)" : "transparent",
@@ -3421,20 +3421,20 @@ function AdminStudentTab({ adminPw, showToast }) {
                     display:"flex", alignItems:"center", gap:10,
                   }}>
                     <div style={{ flex:1 }}>
-                      <div style={{ fontSize: 12, fontWeight:700, marginBottom:2 }}>
+                      <div style={{ fontSize: 13, fontWeight:700, marginBottom:2 }}>
                         {p["수강권종류"]}
-                        <span style={{ fontSize: 10, marginLeft:6, padding:"1px 5px", borderRadius:3,
+                        <span style={{ fontSize: 11, marginLeft:6, padding:"1px 5px", borderRadius:3,
                           background: p["상태"]==="활성" ? "rgba(52,211,153,.15)" : "rgba(148,163,184,.1)",
                           color: p["상태"]==="활성" ? "#34d399" : "#4b5675",
                         }}>{p["상태"]}</span>
                       </div>
-                      <div style={{ fontSize: 11, color:"#94a3b8" }}>만료 {String(p["만료일"]||"").slice(0,10)}</div>
+                      <div style={{ fontSize: 12, color:"#94a3b8" }}>만료 {String(p["만료일"]||"").slice(0,10)}</div>
                     </div>
                     <div style={{ textAlign:"right" }}>
-                      <div style={{ fontSize: 19, fontWeight:900, color:"#34d399", fontFamily:"monospace" }}>
+                      <div style={{ fontSize: 20, fontWeight:900, color:"#34d399", fontFamily:"monospace" }}>
                         {p["잔여횟수"]}
                       </div>
-                      <div style={{ fontSize: 10, color:"#4b5675" }}>/ {p["총횟수"]}회</div>
+                      <div style={{ fontSize: 11, color:"#4b5675" }}>/ {p["총횟수"]}회</div>
                     </div>
                   </div>
                 ))
@@ -3443,11 +3443,11 @@ function AdminStudentTab({ adminPw, showToast }) {
 
             {/* 예약 이력 */}
             <div style={{ marginBottom:14 }}>
-              <div style={{ fontSize: 12, fontWeight:700, color:"#4b5675", letterSpacing:.8, textTransform:"uppercase", marginBottom:8 }}>
+              <div style={{ fontSize: 13, fontWeight:700, color:"#4b5675", letterSpacing:.8, textTransform:"uppercase", marginBottom:8 }}>
                 📋 예약 이력 (최근 {(detail.bookings||[]).length}건)
               </div>
               {(detail.bookings||[]).length === 0
-                ? <div style={{ color:"#4b5675", fontSize: 12 }}>예약 이력 없음</div>
+                ? <div style={{ color:"#4b5675", fontSize: 13 }}>예약 이력 없음</div>
                 : (detail.bookings||[]).slice().reverse().slice(0,10).map(b => {
                   const sc = statusColor[b["상태"]] || "#4b5675";
                   return (
@@ -3458,12 +3458,12 @@ function AdminStudentTab({ adminPw, showToast }) {
                       borderLeft:`3px solid ${sc}`,
                     }}>
                       <div style={{ flex:1 }}>
-                        <div style={{ fontSize: 12, fontWeight:600 }}>{b["프로명"]} · {b["레슨종류"]}</div>
-                        <div style={{ fontSize: 11, color:"#4b5675", fontFamily:"monospace" }}>
+                        <div style={{ fontSize: 13, fontWeight:600 }}>{b["프로명"]} · {b["레슨종류"]}</div>
+                        <div style={{ fontSize: 12, color:"#4b5675", fontFamily:"monospace" }}>
                           {String(b["날짜"]||"").slice(0,10)} {String(b["시작시간"]||"").slice(0,5)}
                         </div>
                       </div>
-                      <span style={{ fontSize: 10, padding:"2px 6px", borderRadius:3, fontWeight:700,
+                      <span style={{ fontSize: 11, padding:"2px 6px", borderRadius:3, fontWeight:700,
                         background:`${sc}22`, color:sc }}>
                         {b["상태"]}
                       </span>
@@ -3476,7 +3476,7 @@ function AdminStudentTab({ adminPw, showToast }) {
             {/* 레슨 일지 */}
             {(detail.lessonLogs||[]).length > 0 && (
               <div>
-                <div style={{ fontSize: 12, fontWeight:700, color:"#4b5675", letterSpacing:.8, textTransform:"uppercase", marginBottom:8 }}>
+                <div style={{ fontSize: 13, fontWeight:700, color:"#4b5675", letterSpacing:.8, textTransform:"uppercase", marginBottom:8 }}>
                   📝 레슨 일지 ({(detail.lessonLogs||[]).length}회차)
                 </div>
                 {(detail.lessonLogs||[]).slice(0,5).map((l,i) => (
@@ -3485,10 +3485,10 @@ function AdminStudentTab({ adminPw, showToast }) {
                     background:"#181c25", border:"1px solid #2d3347",
                   }}>
                     <div style={{ display:"flex", justifyContent:"space-between", marginBottom:3 }}>
-                      <span style={{ fontSize: 11, fontWeight:700, color:"#38bdf8" }}>{l["회차번호"]}회차</span>
-                      <span style={{ fontSize: 10, color:"#4b5675" }}>{String(l["레슨날짜"]||"").slice(0,10)}</span>
+                      <span style={{ fontSize: 12, fontWeight:700, color:"#38bdf8" }}>{l["회차번호"]}회차</span>
+                      <span style={{ fontSize: 11, color:"#4b5675" }}>{String(l["레슨날짜"]||"").slice(0,10)}</span>
                     </div>
-                    {l["코멘트"] && <div style={{ fontSize: 11, color:"#94a3b8", lineHeight:1.5 }}>{l["코멘트"]}</div>}
+                    {l["코멘트"] && <div style={{ fontSize: 12, color:"#94a3b8", lineHeight:1.5 }}>{l["코멘트"]}</div>}
                   </div>
                 ))}
               </div>
@@ -3600,9 +3600,9 @@ function AdminLessonTab({ adminPw, showToast }) {
     <div>
       {/* 헤더 */}
       <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:12 }}>
-        <div style={{ fontSize: 13, color:"#4b5675" }}>총 {lessons.length}개 레슨 종류</div>
+        <div style={{ fontSize: 14, color:"#4b5675" }}>총 {lessons.length}개 레슨 종류</div>
         <button onClick={openNew} style={{
-          padding:"6px 14px", borderRadius:8, fontSize: 12, fontWeight:700, cursor:"pointer",
+          padding:"6px 14px", borderRadius:8, fontSize: 13, fontWeight:700, cursor:"pointer",
           background:"rgba(52,211,153,.15)", border:"1px solid rgba(52,211,153,.3)", color:"#34d399",
         }}>+ 레슨 추가</button>
       </div>
@@ -3613,25 +3613,25 @@ function AdminLessonTab({ adminPw, showToast }) {
           background:"#181c25", border:"1px solid rgba(52,211,153,.2)",
           borderRadius:12, padding:14, marginBottom:14,
         }}>
-          <div style={{ fontSize: 13, fontWeight:700, color:"#34d399", marginBottom:12 }}>
+          <div style={{ fontSize: 14, fontWeight:700, color:"#34d399", marginBottom:12 }}>
             {editLesson ? `✏️ "${editLesson["레슨명"]}" 수정` : "➕ 새 레슨 종류 추가"}
           </div>
 
           {/* 레슨명 */}
           <div style={{ marginBottom:10 }}>
-            <div style={{ fontSize: 10, color:"#4b5675", marginBottom:3 }}>레슨명 *</div>
+            <div style={{ fontSize: 11, color:"#4b5675", marginBottom:3 }}>레슨명 *</div>
             <input value={fName} onChange={e=>setFName(e.target.value)}
               placeholder="예: 개인30분, 그룹레슨, VIP 코칭..."
-              style={{ ...INP, fontSize: 13 }} />
+              style={{ ...INP, fontSize: 14 }} />
           </div>
 
           {/* 소요시간 */}
           <div style={{ marginBottom:10 }}>
-            <div style={{ fontSize: 10, color:"#4b5675", marginBottom:4 }}>소요시간 *</div>
+            <div style={{ fontSize: 11, color:"#4b5675", marginBottom:4 }}>소요시간 *</div>
             <div style={{ display:"flex", flexWrap:"wrap", gap:4 }}>
               {DURATIONS.map(d => (
                 <button key={d.val} onClick={() => setFDur(d.val)} style={{
-                  padding:"5px 10px", borderRadius:6, fontSize: 12, cursor:"pointer",
+                  padding:"5px 10px", borderRadius:6, fontSize: 13, cursor:"pointer",
                   fontWeight: fDur===d.val ? 700 : 400,
                   background: fDur===d.val ? "#34d399" : "#1a1e28",
                   color: fDur===d.val ? "#000" : "#94a3b8",
@@ -3643,31 +3643,31 @@ function AdminLessonTab({ adminPw, showToast }) {
                 <input value={!DURATIONS.find(d=>d.val===fDur) ? fDur : ""}
                   onChange={e=>setFDur(e.target.value)}
                   placeholder="직접입력(분)"
-                  style={{ ...INP, width:80, fontSize: 11 }} />
+                  style={{ ...INP, width:80, fontSize: 12 }} />
               </div>
             </div>
           </div>
 
           {/* 가격 */}
           <div style={{ marginBottom:10 }}>
-            <div style={{ fontSize: 10, color:"#4b5675", marginBottom:3 }}>가격 (원, 선택)</div>
+            <div style={{ fontSize: 11, color:"#4b5675", marginBottom:3 }}>가격 (원, 선택)</div>
             <input value={fPrice} onChange={e=>setFPrice(e.target.value)}
               placeholder="예: 30000"
               type="number"
-              style={{ ...INP, fontSize: 13 }} />
+              style={{ ...INP, fontSize: 14 }} />
           </div>
 
           {/* 설명 */}
           <div style={{ marginBottom:10 }}>
-            <div style={{ fontSize: 10, color:"#4b5675", marginBottom:3 }}>설명 (선택)</div>
+            <div style={{ fontSize: 11, color:"#4b5675", marginBottom:3 }}>설명 (선택)</div>
             <input value={fDesc} onChange={e=>setFDesc(e.target.value)}
               placeholder="예: 1:1 개인 레슨 30분"
-              style={{ ...INP, fontSize: 13 }} />
+              style={{ ...INP, fontSize: 14 }} />
           </div>
 
           {/* 색상 */}
           <div style={{ marginBottom:10 }}>
-            <div style={{ fontSize: 10, color:"#4b5675", marginBottom:4 }}>색상 태그</div>
+            <div style={{ fontSize: 11, color:"#4b5675", marginBottom:4 }}>색상 태그</div>
             <div style={{ display:"flex", gap:6, alignItems:"center" }}>
               {COLORS.map(c => (
                 <div key={c} onClick={() => setFColor(c)} style={{
@@ -3679,16 +3679,16 @@ function AdminLessonTab({ adminPw, showToast }) {
               ))}
               <input type="color" value={fColor} onChange={e=>setFColor(e.target.value)}
                 style={{ width:28, height:28, borderRadius:4, border:"none", cursor:"pointer", background:"none" }} />
-              <span style={{ fontSize: 11, color:"#4b5675" }}>{fColor}</span>
+              <span style={{ fontSize: 12, color:"#4b5675" }}>{fColor}</span>
             </div>
           </div>
 
           {/* 정렬순서 */}
           <div style={{ marginBottom:14 }}>
-            <div style={{ fontSize: 10, color:"#4b5675", marginBottom:3 }}>정렬 순서</div>
+            <div style={{ fontSize: 11, color:"#4b5675", marginBottom:3 }}>정렬 순서</div>
             <input value={fOrder} onChange={e=>setFOrder(e.target.value)}
               type="number" placeholder="숫자가 작을수록 앞에 표시"
-              style={{ ...INP, fontSize: 13 }} />
+              style={{ ...INP, fontSize: 14 }} />
           </div>
 
           {/* 미리보기 */}
@@ -3699,8 +3699,8 @@ function AdminLessonTab({ adminPw, showToast }) {
           }}>
             <div style={{ width:10, height:10, borderRadius:"50%", background:fColor, flexShrink:0 }}/>
             <div>
-              <div style={{ fontSize: 13, fontWeight:700, color:fColor }}>{fName||"레슨명"}</div>
-              <div style={{ fontSize: 11, color:"#94a3b8" }}>
+              <div style={{ fontSize: 14, fontWeight:700, color:fColor }}>{fName||"레슨명"}</div>
+              <div style={{ fontSize: 12, color:"#94a3b8" }}>
                 {DURATIONS.find(d=>d.val===fDur)?.label || fDur+"분"}
                 {fPrice ? ` · ${Number(fPrice).toLocaleString()}원` : ""}
               </div>
@@ -3709,11 +3709,11 @@ function AdminLessonTab({ adminPw, showToast }) {
 
           <div style={{ display:"flex", gap:8 }}>
             <button onClick={() => setShowForm(false)} style={{
-              flex:1, padding:"8px 0", borderRadius:8, fontSize: 12, cursor:"pointer",
+              flex:1, padding:"8px 0", borderRadius:8, fontSize: 13, cursor:"pointer",
               background:"#1a1e28", border:"1px solid #2d3347", color:"#94a3b8",
             }}>취소</button>
             <button onClick={save} disabled={submitting} style={{
-              flex:2, padding:"8px 0", borderRadius:8, fontSize: 13, fontWeight:700,
+              flex:2, padding:"8px 0", borderRadius:8, fontSize: 14, fontWeight:700,
               cursor: submitting ? "not-allowed" : "pointer",
               background:"#34d399", border:"none", color:"#000",
               opacity: submitting ? .6 : 1,
@@ -3725,9 +3725,9 @@ function AdminLessonTab({ adminPw, showToast }) {
 
       {/* 레슨 목록 */}
       {loading ? <Spinner /> : lessons.length === 0 ? (
-        <div style={{ textAlign:"center", color:"#4b5675", fontSize: 13, padding:"24px 0" }}>
+        <div style={{ textAlign:"center", color:"#4b5675", fontSize: 14, padding:"24px 0" }}>
           레슨 종류가 없습니다.<br/>
-          <span style={{ fontSize: 12, color:"#2d3347" }}>위 버튼으로 추가해보세요.</span>
+          <span style={{ fontSize: 13, color:"#2d3347" }}>위 버튼으로 추가해보세요.</span>
         </div>
       ) : lessons.map(l => (
         <div key={l["레슨ID"]} style={{
@@ -3742,26 +3742,26 @@ function AdminLessonTab({ adminPw, showToast }) {
           }}/>
           <div style={{ flex:1 }}>
             <div style={{ display:"flex", alignItems:"center", gap:6, marginBottom:2 }}>
-              <span style={{ fontSize: 13, fontWeight:700 }}>{l["레슨명"]}</span>
+              <span style={{ fontSize: 14, fontWeight:700 }}>{l["레슨명"]}</span>
               <span style={{
-                fontSize: 10, padding:"1px 6px", borderRadius:3,
+                fontSize: 11, padding:"1px 6px", borderRadius:3,
                 background:(l["색상"]||"#34d399")+"22", color:l["색상"]||"#34d399", fontWeight:700,
               }}>
                 {l["소요시간(분)"]}분
               </span>
             </div>
-            <div style={{ fontSize: 11, color:"#4b5675" }}>
+            <div style={{ fontSize: 12, color:"#4b5675" }}>
               {l["가격"] ? Number(l["가격"]).toLocaleString()+"원" : "가격 미설정"}
               {l["설명"] ? ` · ${l["설명"]}` : ""}
             </div>
           </div>
           <div style={{ display:"flex", gap:4 }}>
             <button onClick={() => openEdit(l)} style={{
-              padding:"4px 8px", borderRadius:5, fontSize: 10, cursor:"pointer",
+              padding:"4px 8px", borderRadius:5, fontSize: 11, cursor:"pointer",
               border:"1px solid rgba(56,189,248,.3)", background:"rgba(56,189,248,.1)", color:"#38bdf8",
             }}>수정</button>
             <button onClick={() => del(l["레슨ID"], l["레슨명"])} style={{
-              padding:"4px 8px", borderRadius:5, fontSize: 10, cursor:"pointer",
+              padding:"4px 8px", borderRadius:5, fontSize: 11, cursor:"pointer",
               border:"1px solid rgba(248,113,113,.3)", background:"rgba(248,113,113,.1)", color:"#f87171",
             }}>삭제</button>
           </div>
@@ -3798,8 +3798,8 @@ function AdminThemeTab({ theme, setTheme }) {
 
   return (
     <div>
-      <div style={{ fontSize: 14, fontWeight:700, marginBottom:4 }}>🎨 앱 테마 설정</div>
-      <div style={{ fontSize: 12, color:"#4b5675", marginBottom:16 }}>
+      <div style={{ fontSize: 15, fontWeight:700, marginBottom:4 }}>🎨 앱 테마 설정</div>
+      <div style={{ fontSize: 13, color:"#4b5675", marginBottom:16 }}>
         선택한 테마가 앱 전체에 즉시 적용됩니다.
       </div>
 
@@ -3835,8 +3835,8 @@ function AdminThemeTab({ theme, setTheme }) {
 
             {/* 설명 */}
             <div style={{ flex: 1 }}>
-              <div style={{ fontSize: 14, fontWeight: 700, marginBottom: 3 }}>{t.label}</div>
-              <div style={{ fontSize: 12, color: "var(--text2)" }}>{t.desc}</div>
+              <div style={{ fontSize: 15, fontWeight: 700, marginBottom: 3 }}>{t.label}</div>
+              <div style={{ fontSize: 13, color: "var(--text2)" }}>{t.desc}</div>
             </div>
 
             {/* 선택 표시 */}
@@ -3845,7 +3845,7 @@ function AdminThemeTab({ theme, setTheme }) {
               border: `2px solid ${isSel ? "#34d399" : "var(--border)"}`,
               background: isSel ? "#34d399" : "transparent",
               display: "flex", alignItems: "center", justifyContent: "center",
-              fontSize: 11, color: "#000",
+              fontSize: 12, color: "#000",
             }}>
               {isSel ? "✓" : ""}
             </div>
@@ -3857,7 +3857,7 @@ function AdminThemeTab({ theme, setTheme }) {
       <div style={{
         marginTop: 8, padding: "10px 14px",
         background: "var(--card)", border: "1px solid var(--border)",
-        borderRadius: 10, fontSize: 12, color: "var(--text2)",
+        borderRadius: 10, fontSize: 13, color: "var(--text2)",
       }}>
         현재 적용: <b style={{ color:"#34d399" }}>
           {THEMES.find(t=>t.id===theme)?.label || theme}
@@ -3977,7 +3977,7 @@ function AdminBlockTab({ coaches, adminPw, showToast }) {
       <div style={{ display:"flex", gap:6, marginBottom:12, flexWrap:"wrap" }}>
         {coaches.filter(c=>c.status==="active").map(c => (
           <button key={c.id} onClick={() => setSelCoach(c.id)} style={{
-            padding:"6px 12px", borderRadius:7, fontSize: 12, cursor:"pointer",
+            padding:"6px 12px", borderRadius:7, fontSize: 13, cursor:"pointer",
             fontWeight: selCoach===c.id ? 700 : 400,
             background: selCoach===c.id ? (c.color||"#34d399") : "#1a1e28",
             color: selCoach===c.id ? "#000" : "#94a3b8",
@@ -3988,7 +3988,7 @@ function AdminBlockTab({ coaches, adminPw, showToast }) {
 
       {/* 차단 등록 버튼 */}
       <button onClick={() => setShowForm(!showForm)} style={{
-        width:"100%", padding:"9px 0", borderRadius:9, fontSize: 13, fontWeight:700,
+        width:"100%", padding:"9px 0", borderRadius:9, fontSize: 14, fontWeight:700,
         cursor:"pointer", marginBottom:12,
         background: showForm ? "#1a1e28" : "rgba(248,113,113,.15)",
         border: showForm ? "1px solid #2d3347" : "1px solid rgba(248,113,113,.3)",
@@ -4001,25 +4001,25 @@ function AdminBlockTab({ coaches, adminPw, showToast }) {
           background:"#181c25", border:"1px solid rgba(248,113,113,.2)",
           borderRadius:12, padding:14, marginBottom:14,
         }}>
-          <div style={{ fontSize: 13, fontWeight:700, color:"#f87171", marginBottom:12 }}>차단 설정</div>
+          <div style={{ fontSize: 14, fontWeight:700, color:"#f87171", marginBottom:12 }}>차단 설정</div>
 
           {/* 차단 유형 */}
           <div style={{ marginBottom:10 }}>
-            <div style={{ fontSize: 10, color:"#4b5675", marginBottom:4 }}>차단 유형</div>
+            <div style={{ fontSize: 11, color:"#4b5675", marginBottom:4 }}>차단 유형</div>
             <div style={{ display:"flex", gap:6 }}>
               {[
                 { id:"날짜", label:"📅 특정 날짜", desc:"하루만" },
                 { id:"요일", label:"🔁 요일 반복", desc:"매주 반복" },
               ].map(t => (
                 <button key={t.id} onClick={() => setBlockType(t.id)} style={{
-                  flex:1, padding:"8px 6px", borderRadius:8, fontSize: 12, cursor:"pointer",
+                  flex:1, padding:"8px 6px", borderRadius:8, fontSize: 13, cursor:"pointer",
                   fontWeight: blockType===t.id ? 700 : 400,
                   background: blockType===t.id ? "rgba(248,113,113,.2)" : "#1a1e28",
                   color: blockType===t.id ? "#f87171" : "#94a3b8",
                   border: `1px solid ${blockType===t.id ? "rgba(248,113,113,.4)" : "#2d3347"}`,
                 }}>
                   <div>{t.label}</div>
-                  <div style={{ fontSize: 10, opacity:.7, marginTop:2 }}>{t.desc}</div>
+                  <div style={{ fontSize: 11, opacity:.7, marginTop:2 }}>{t.desc}</div>
                 </button>
               ))}
             </div>
@@ -4028,17 +4028,17 @@ function AdminBlockTab({ coaches, adminPw, showToast }) {
           {/* 날짜 또는 요일 선택 */}
           {blockType === "날짜" ? (
             <div style={{ marginBottom:10 }}>
-              <div style={{ fontSize: 10, color:"#4b5675", marginBottom:4 }}>차단 날짜 *</div>
+              <div style={{ fontSize: 11, color:"#4b5675", marginBottom:4 }}>차단 날짜 *</div>
               <input type="date" value={selDate} onChange={e=>setSelDate(e.target.value)}
-                style={{ ...INP, fontSize: 13 }} />
+                style={{ ...INP, fontSize: 14 }} />
             </div>
           ) : (
             <div style={{ marginBottom:10 }}>
-              <div style={{ fontSize: 10, color:"#4b5675", marginBottom:4 }}>반복 요일 *</div>
+              <div style={{ fontSize: 11, color:"#4b5675", marginBottom:4 }}>반복 요일 *</div>
               <div style={{ display:"flex", gap:4 }}>
                 {DOW_KR.map((d,i) => (
                   <button key={i} onClick={() => setSelDow(i)} style={{
-                    flex:1, padding:"7px 0", borderRadius:6, fontSize: 12, cursor:"pointer",
+                    flex:1, padding:"7px 0", borderRadius:6, fontSize: 13, cursor:"pointer",
                     fontWeight: selDow===i ? 700 : 400,
                     background: selDow===i ? "#f87171" : "#1a1e28",
                     color: selDow===i ? "#fff" : i===0?"#f87171":i===6?"#38bdf8":"#94a3b8",
@@ -4051,35 +4051,35 @@ function AdminBlockTab({ coaches, adminPw, showToast }) {
 
           {/* 시간 범위 */}
           <div style={{ marginBottom:10 }}>
-            <div style={{ fontSize: 10, color:"#4b5675", marginBottom:4 }}>차단 시간 범위 *</div>
+            <div style={{ fontSize: 11, color:"#4b5675", marginBottom:4 }}>차단 시간 범위 *</div>
             <div style={{ display:"flex", alignItems:"center", gap:8 }}>
               <select value={fromTime} onChange={e=>setFromTime(e.target.value)}
-                style={{ ...INP, flex:1, fontSize: 12 }}>
+                style={{ ...INP, flex:1, fontSize: 13 }}>
                 {TIMES.map(t => <option key={t} value={t}>{t}</option>)}
               </select>
-              <span style={{ color:"#4b5675", fontSize: 13 }}>~</span>
+              <span style={{ color:"#4b5675", fontSize: 14 }}>~</span>
               <select value={toTime} onChange={e=>setToTime(e.target.value)}
-                style={{ ...INP, flex:1, fontSize: 12 }}>
+                style={{ ...INP, flex:1, fontSize: 13 }}>
                 {TIMES.map(t => <option key={t} value={t}>{t}</option>)}
               </select>
             </div>
-            <div style={{ fontSize: 10, color:"#4b5675", marginTop:4 }}>
+            <div style={{ fontSize: 11, color:"#4b5675", marginTop:4 }}>
               {buildTimeList(fromTime, toTime).length}개 슬롯 차단 ({fromTime}~{toTime})
             </div>
           </div>
 
           {/* 사유 */}
           <div style={{ marginBottom:12 }}>
-            <div style={{ fontSize: 10, color:"#4b5675", marginBottom:4 }}>사유 (선택)</div>
+            <div style={{ fontSize: 11, color:"#4b5675", marginBottom:4 }}>사유 (선택)</div>
             <input value={reason} onChange={e=>setReason(e.target.value)}
               placeholder="예: 점심시간, 개인 일정, 휴무..."
-              style={{ ...INP, fontSize: 12 }} />
+              style={{ ...INP, fontSize: 13 }} />
           </div>
 
           {/* 미리보기 요약 */}
           <div style={{
             background:"rgba(248,113,113,.06)", border:"1px solid rgba(248,113,113,.15)",
-            borderRadius:8, padding:"8px 12px", marginBottom:12, fontSize: 12,
+            borderRadius:8, padding:"8px 12px", marginBottom:12, fontSize: 13,
           }}>
             <div style={{ color:"#f87171", fontWeight:700, marginBottom:4 }}>🚫 차단 요약</div>
             <div style={{ color:"#94a3b8", lineHeight:1.8 }}>
@@ -4094,11 +4094,11 @@ function AdminBlockTab({ coaches, adminPw, showToast }) {
 
           <div style={{ display:"flex", gap:8 }}>
             <button onClick={() => setShowForm(false)} style={{
-              flex:1, padding:"8px 0", borderRadius:8, fontSize: 12, cursor:"pointer",
+              flex:1, padding:"8px 0", borderRadius:8, fontSize: 13, cursor:"pointer",
               background:"#1a1e28", border:"1px solid #2d3347", color:"#94a3b8",
             }}>취소</button>
             <button onClick={addBlock} disabled={submitting} style={{
-              flex:2, padding:"8px 0", borderRadius:8, fontSize: 13, fontWeight:700,
+              flex:2, padding:"8px 0", borderRadius:8, fontSize: 14, fontWeight:700,
               cursor: submitting ? "not-allowed" : "pointer",
               background:"rgba(248,113,113,.85)", border:"none", color:"#fff",
               opacity: submitting ? .6 : 1,
@@ -4110,12 +4110,12 @@ function AdminBlockTab({ coaches, adminPw, showToast }) {
 
       {/* 차단 목록 */}
       {loading ? <Spinner /> : blocks.length === 0 ? (
-        <div style={{ textAlign:"center", color:"#4b5675", fontSize: 13, padding:"24px 0" }}>
+        <div style={{ textAlign:"center", color:"#4b5675", fontSize: 14, padding:"24px 0" }}>
           등록된 차단이 없습니다.
         </div>
       ) : (
         <div>
-          <div style={{ fontSize: 11, color:"#4b5675", marginBottom:8 }}>
+          <div style={{ fontSize: 12, color:"#4b5675", marginBottom:8 }}>
             활성 차단 {blocks.length}건
           </div>
           {blocks.map(b => {
@@ -4128,36 +4128,36 @@ function AdminBlockTab({ coaches, adminPw, showToast }) {
                 borderRadius:10, padding:"10px 12px", marginBottom:8,
                 display:"flex", alignItems:"flex-start", gap:10,
               }}>
-                <span style={{ fontSize: 21, marginTop:2 }}>{isRepeat ? "🔁" : "📅"}</span>
+                <span style={{ fontSize: 22, marginTop:2 }}>{isRepeat ? "🔁" : "📅"}</span>
                 <div style={{ flex:1 }}>
                   <div style={{ display:"flex", alignItems:"center", gap:6, marginBottom:3 }}>
                     <span style={{
-                      fontSize: 10, padding:"1px 6px", borderRadius:3, fontWeight:700,
+                      fontSize: 11, padding:"1px 6px", borderRadius:3, fontWeight:700,
                       background: isRepeat ? "rgba(56,189,248,.2)" : "rgba(248,113,113,.2)",
                       color: isRepeat ? "#38bdf8" : "#f87171",
                     }}>{isRepeat ? "요일 반복" : "특정 날짜"}</span>
                   </div>
-                  <div style={{ fontSize: 13, fontWeight:700, marginBottom:2 }}>
+                  <div style={{ fontSize: 14, fontWeight:700, marginBottom:2 }}>
                     {isRepeat
                       ? `매주 ${DOW_KR[Number(b["날짜범위또는요일"])]}요일`
                       : b["날짜범위또는요일"]
                     }
                   </div>
-                  <div style={{ fontSize: 12, color:"#94a3b8" }}>
+                  <div style={{ fontSize: 13, color:"#94a3b8" }}>
                     {times.length > 0
                       ? `⏰ ${times[0]} ~ ${times[times.length-1]}`
                       : "전체 시간"
                     } · {times.length}슬롯
                   </div>
                   {b["사유"] && (
-                    <div style={{ fontSize: 11, color:"#4b5675", marginTop:2 }}>💬 {b["사유"]}</div>
+                    <div style={{ fontSize: 12, color:"#4b5675", marginTop:2 }}>💬 {b["사유"]}</div>
                   )}
-                  <div style={{ fontSize: 10, color:"#2d3347", marginTop:3 }}>
+                  <div style={{ fontSize: 11, color:"#2d3347", marginTop:3 }}>
                     {String(b["등록일시"]||"").slice(0,10)} 등록
                   </div>
                 </div>
                 <button onClick={() => removeBlock(b["차단ID"])} style={{
-                  padding:"4px 10px", borderRadius:6, fontSize: 11, cursor:"pointer", flexShrink:0,
+                  padding:"4px 10px", borderRadius:6, fontSize: 12, cursor:"pointer", flexShrink:0,
                   background:"rgba(248,113,113,.12)", border:"1px solid rgba(248,113,113,.3)", color:"#f87171",
                 }}>해제</button>
               </div>
@@ -4178,14 +4178,14 @@ function AdminReportTab({ list, adminPw, showToast, onDone }) {
     try { await apiPost({ action: "dismissReport", reportId: id, password: adminPw }); showToast("기각 처리"); onDone(); }
     catch (e) { showToast("❌ " + e.message); }
   };
-  if (!list.length) return <div style={{ color: "#4b5675", textAlign: "center", fontSize: 13, padding: 20 }}>접수된 신고가 없습니다. ✅</div>;
+  if (!list.length) return <div style={{ color: "#4b5675", textAlign: "center", fontSize: 14, padding: 20 }}>접수된 신고가 없습니다. ✅</div>;
   return list.map(r => (
     <div key={r.신고ID} style={{ background: "rgba(248,113,113,.05)", border: "1px solid rgba(248,113,113,.2)", borderRadius: 10, padding: 10, marginBottom: 8 }}>
-      <div style={{ fontSize: 12, fontWeight: 700, color: "#f87171", marginBottom: 3 }}>{r.대상타입 === "post" ? "📝 게시글" : "💬 댓글"} 신고</div>
-      <div style={{ fontSize: 11, color: "#94a3b8", marginBottom: 6 }}>사유: {r.신고사유} · {r.신고일시?.slice(0, 10)}</div>
+      <div style={{ fontSize: 13, fontWeight: 700, color: "#f87171", marginBottom: 3 }}>{r.대상타입 === "post" ? "📝 게시글" : "💬 댓글"} 신고</div>
+      <div style={{ fontSize: 12, color: "#94a3b8", marginBottom: 6 }}>사유: {r.신고사유} · {r.신고일시?.slice(0, 10)}</div>
       <div style={{ display: "flex", gap: 6 }}>
-        <button onClick={() => blind(r.대상타입, r.대상ID)} style={{ padding: "4px 10px", borderRadius: 6, background: "rgba(248,113,113,.2)", border: "1px solid rgba(248,113,113,.3)", color: "#f87171", fontSize: 11, cursor: "pointer" }}>🚫 블라인드</button>
-        <button onClick={() => dismiss(r.신고ID)} style={{ padding: "4px 10px", borderRadius: 6, background: "var(--inp-bg)", border: "1px solid var(--border)", color: "#94a3b8", fontSize: 11, cursor: "pointer" }}>기각</button>
+        <button onClick={() => blind(r.대상타입, r.대상ID)} style={{ padding: "4px 10px", borderRadius: 6, background: "rgba(248,113,113,.2)", border: "1px solid rgba(248,113,113,.3)", color: "#f87171", fontSize: 12, cursor: "pointer" }}>🚫 블라인드</button>
+        <button onClick={() => dismiss(r.신고ID)} style={{ padding: "4px 10px", borderRadius: 6, background: "var(--inp-bg)", border: "1px solid var(--border)", color: "#94a3b8", fontSize: 12, cursor: "pointer" }}>기각</button>
       </div>
     </div>
   ));
@@ -4259,8 +4259,8 @@ export default function App() {
         padding: "14px 16px", display: "flex", alignItems: "center", justifyContent: "space-between",
         position: "sticky", top: 0, zIndex: 100,
       }}>
-        <div style={{ fontSize: 18, fontWeight: 900 }}>⛳ OK골프 레슨</div>
-        <span style={{ fontSize: 19 }}>🔔</span>
+        <div style={{ fontSize: 19, fontWeight: 900 }}>⛳ OK골프 레슨</div>
+        <span style={{ fontSize: 20 }}>🔔</span>
       </div>
 
       {/* 화면 */}
@@ -4283,8 +4283,8 @@ export default function App() {
             flex: 1, display: "flex", flexDirection: "column", alignItems: "center",
             gap: 2, padding: "8px 0", cursor: "pointer",
           }}>
-            <span style={{ fontSize: 21 }}>{t.icon}</span>
-            <span style={{ fontSize: 10, color: tab === t.id ? "#34d399" : "#4b5675", fontWeight: tab === t.id ? 700 : 400 }}>{t.label}</span>
+            <span style={{ fontSize: 22 }}>{t.icon}</span>
+            <span style={{ fontSize: 11, color: tab === t.id ? "#34d399" : "#4b5675", fontWeight: tab === t.id ? 700 : 400 }}>{t.label}</span>
           </div>
         ))}
       </div>
