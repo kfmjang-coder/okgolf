@@ -695,7 +695,7 @@ function BookScreen({ coaches, selPro, setSelPro, setDetailPro, showToast, setTa
 // ─────────────────────────────────────────────
 //  마이페이지 (독립 컴포넌트)
 // ─────────────────────────────────────────────
-function MyScreen({ showToast }) {
+function MyScreen({ showToast, theme, setTheme }) {
   const [rawPhone, setRawPhone]     = useState("");
   const [authPhone, setAuthPhone]   = useState("");
   const [myTab, setMyTab]           = useState("booking");
@@ -814,7 +814,7 @@ function MyScreen({ showToast }) {
       {myTab === "booking" && <MyBookingTab phone={authPhone} showToast={showToast} />}
       {myTab === "log"     && <MyLogTab     phone={authPhone} />}
       {myTab === "swing"   && <MySwingTab   phone={authPhone} />}
-      {myTab === "setting" && <MySettingTab phone={authPhone} showToast={showToast} />}
+      {myTab === "setting" && <MySettingTab phone={authPhone} showToast={showToast} theme={theme} setTheme={setTheme} />}
     </div>
   );
 }
@@ -1653,7 +1653,7 @@ function MySwingTab({ phone }) {
   );
 }
 
-function MySettingTab({ phone, showToast }) {
+function MySettingTab({ phone, showToast, theme, setTheme }) {
   const [notif, setNotif] = useState({ booking: true, remind: true, pass: true, comment: true, reply: true });
   const SETTINGS = [
     { key: "booking", label: "예약 확정 / 취소",    sub: "카카오 알림톡" },
@@ -1662,38 +1662,74 @@ function MySettingTab({ phone, showToast }) {
     { key: "pass",    label: "수강권 만료 임박",     sub: "카카오 알림톡" },
     { key: "reply",   label: "대댓글 알림",          sub: "PWA 푸시" },
   ];
+
+  const THEMES = [
+    { id:"dark",   icon:"🌙", label:"다크",   desc:"어두운 화면" },
+    { id:"light",  icon:"☀️", label:"라이트",  desc:"밝은 화면"  },
+    { id:"system", icon:"⚙️", label:"시스템",  desc:"기기 설정 따름" },
+  ];
+
   const save = async () => {
     try {
       await apiPost({ action: "updateNotifSetting", phone, settings: JSON.stringify(notif) });
       showToast("✅ 알림 설정이 저장되었습니다.");
     } catch (e) { showToast("❌ " + e.message); }
   };
+
   return (
     <div>
+      {/* ── 테마 설정 */}
+      <div style={{ ...LBL, marginBottom: 10 }}>🎨 화면 테마</div>
+      <div style={{ display:"flex", gap:8, marginBottom:20 }}>
+        {THEMES.map(t => {
+          const isSel = theme === t.id;
+          return (
+            <button key={t.id} onClick={() => setTheme(t.id)} style={{
+              flex:1, padding:"12px 6px", borderRadius:10, cursor:"pointer",
+              border:`2px solid ${isSel ? "#34d399" : "var(--border)"}`,
+              background: isSel ? "rgba(52,211,153,.1)" : "var(--card)",
+              textAlign:"center", transition:"all .15s",
+            }}>
+              <div style={{ fontSize:22, marginBottom:4 }}>{t.icon}</div>
+              <div style={{ fontSize:11, fontWeight: isSel ? 900 : 400,
+                color: isSel ? "#34d399" : "var(--text2)" }}>{t.label}</div>
+              <div style={{ fontSize:9, color:"var(--text3)", marginTop:2 }}>{t.desc}</div>
+              {isSel && (
+                <div style={{ marginTop:5, width:6, height:6, borderRadius:"50%",
+                  background:"#34d399", margin:"5px auto 0" }}/>
+              )}
+            </button>
+          );
+        })}
+      </div>
+
+      {/* ── 알림 설정 */}
       <div style={{ ...LBL, marginBottom: 10 }}>알림 설정</div>
       {SETTINGS.map(s => (
-        <div key={s.key} style={{ display: "flex", alignItems: "center", gap: 10, padding: "10px 12px", background: "#181c25", borderRadius: 8, marginBottom: 6 }}>
+        <div key={s.key} style={{ display: "flex", alignItems: "center", gap: 10, padding: "10px 12px", background: "var(--card)", borderRadius: 8, marginBottom: 6 }}>
           <div style={{ flex: 1 }}>
             <div style={{ fontSize: 12, fontWeight: 700 }}>{s.label}</div>
-            <div style={{ fontSize: 10, color: "#4b5675" }}>{s.sub}</div>
+            <div style={{ fontSize: 10, color: "var(--text3)" }}>{s.sub}</div>
           </div>
           <div onClick={() => setNotif(p => ({ ...p, [s.key]: !p[s.key] }))}
-            style={{ width: 38, height: 20, borderRadius: 10, cursor: "pointer", background: notif[s.key] ? "#34d399" : "#2d3347", position: "relative", transition: "background .2s" }}>
+            style={{ width: 38, height: 20, borderRadius: 10, cursor: "pointer", background: notif[s.key] ? "#34d399" : "var(--border)", position: "relative", transition: "background .2s" }}>
             <div style={{ position: "absolute", top: 3, left: notif[s.key] ? 20 : 3, width: 14, height: 14, borderRadius: "50%", background: "#fff", transition: "left .2s" }} />
           </div>
         </div>
       ))}
       <Btn onClick={save} style={{ marginTop: 10 }}>저장</Btn>
+
+      {/* ── 고객센터 */}
       <div style={{ ...LBL, marginTop: 16, marginBottom: 10 }}>고객센터</div>
       {[
         { icon: "📞", label: "전화 연결 (010-0000-0000)", fn: () => window.open("tel:010-0000-0000") },
         { icon: "💬", label: "카카오톡 채널 상담",        fn: () => alert("카카오채널 준비 중") },
         { icon: "❓", label: "자주 묻는 질문 (FAQ)",      fn: () => alert("FAQ 준비 중") },
       ].map((item, i) => (
-        <div key={i} onClick={item.fn} style={{ display: "flex", alignItems: "center", gap: 10, padding: "10px 12px", background: "#181c25", borderRadius: 8, marginBottom: 6, cursor: "pointer" }}>
+        <div key={i} onClick={item.fn} style={{ display: "flex", alignItems: "center", gap: 10, padding: "10px 12px", background: "var(--card)", borderRadius: 8, marginBottom: 6, cursor: "pointer" }}>
           <span style={{ fontSize: 16 }}>{item.icon}</span>
           <span style={{ fontSize: 12 }}>{item.label}</span>
-          <span style={{ marginLeft: "auto", color: "#4b5675" }}>›</span>
+          <span style={{ marginLeft: "auto", color: "var(--text3)" }}>›</span>
         </div>
       ))}
     </div>
@@ -2675,7 +2711,6 @@ function AdminScreen({ coaches, setCoaches, showToast, onLogin, theme, setTheme 
         { id:"pro",      label:"🏌️ 프로"    },
         { id:"lessons",  label:"📚 레슨종류" },
         { id:"block",    label:"🚫 차단"     },
-        { id:"theme",    label:"🎨 테마"     },
         { id:"report",   label:"🚨 신고"     },
       ]
     : [
@@ -2685,7 +2720,6 @@ function AdminScreen({ coaches, setCoaches, showToast, onLogin, theme, setTheme 
         { id:"pro",      label:"🏌️ 프로"},
         { id:"lessons",  label:"📚 레슨" },
         { id:"block",    label:"🚫 차단" },
-        { id:"theme",    label:"🎨 테마" },
         { id:"report",   label:"🚨 신고" },
       ];
 
@@ -2723,7 +2757,6 @@ function AdminScreen({ coaches, setCoaches, showToast, onLogin, theme, setTheme 
       {adminTab === "report"   && <AdminReportTab list={reports} adminPw={adminPw} showToast={showToast} onDone={() => loadData(adminPw, "report")} />}
       {adminTab === "students" && <AdminStudentTab adminPw={adminPw} showToast={showToast} />}
       {adminTab === "lessons"  && <AdminLessonTab adminPw={adminPw} showToast={showToast} />}
-      {adminTab === "theme"    && <AdminThemeTab theme={theme} setTheme={setTheme} />}
       {adminTab === "block"    && <AdminBlockTab coaches={coaches} adminPw={adminPw} showToast={showToast} />}
     </div>
   );
@@ -4234,7 +4267,7 @@ export default function App() {
       <div style={{ flex: 1, overflowY: "auto", paddingBottom: 62 }}>
         {tab === "home"  && <HomeScreen  coaches={coaches} selPro={selPro} setSelPro={setSelPro} setTab={setTab} setBookStep={setBookStep} setDetailPro={setDetailPro} />}
         {tab === "book"  && <BookScreen  coaches={coaches} selPro={selPro} setSelPro={setSelPro} setDetailPro={setDetailPro} showToast={showToast} setTab={setTab} />}
-        {tab === "my"    && <MyScreen    showToast={showToast} />}
+        {tab === "my"    && <MyScreen    showToast={showToast} theme={theme} setTheme={setTheme} />}
         {tab === "board" && <BoardScreen coaches={coaches} myPhone="" adminPw={globalAdminPw} showToast={showToast} />}
         {tab === "admin" && <AdminScreen coaches={coaches} setCoaches={setCoaches} showToast={showToast} onLogin={setGlobalAdminPw} theme={theme} setTheme={setTheme} />}
       </div>
