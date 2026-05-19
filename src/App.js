@@ -1189,6 +1189,20 @@ function MyBookingTab({ phone, showToast }) {
               repeats={repeats}
               loading={repeatLoading}
               showToast={showToast}
+              onRefresh={() => {
+                // 달력·목록 예약 새로고침
+                setLoading(true);
+                apiGet({ action:"getMyBookings", phone, type:"all" })
+                  .then(rows => setBookings(rows||[]))
+                  .catch(()=>{})
+                  .finally(()=>setLoading(false));
+                // 반복예약 목록도 새로고침
+                setRepeatLoading(true);
+                apiGet({ action:"getMyRepeats", phone })
+                  .then(r => setRepeats(r||[]))
+                  .catch(()=>{})
+                  .finally(()=>setRepeatLoading(false));
+              }}
               onCancel={async (repeatId) => {
                 try {
                   await apiPost({ action:"cancelRepeat", repeatId, phone });
@@ -1198,6 +1212,12 @@ function MyBookingTab({ phone, showToast }) {
                     .then(r => setRepeats(r||[]))
                     .catch(()=>{})
                     .finally(()=>setRepeatLoading(false));
+                  // 달력·목록도 새로고침
+                  setLoading(true);
+                  apiGet({ action:"getMyBookings", phone, type:"all" })
+                    .then(rows => setBookings(rows||[]))
+                    .catch(()=>{})
+                    .finally(()=>setLoading(false));
                 } catch(e) { showToast("❌ " + e.message); }
               }}
             />
@@ -1251,7 +1271,7 @@ function BookingCard({ booking: b, onCancel, canCancel, statusColor }) {
 }
 
 // ── 반복 예약 탭 컴포넌트
-function RepeatBookingTab({ phone, repeats, loading, showToast, onCancel }) {
+function RepeatBookingTab({ phone, repeats, loading, showToast, onCancel, onRefresh }) {
   const [showForm, setShowForm]   = useState(false);
   const [coaches, setCoaches]     = useState([]);
   const [submitting, setSubmitting] = useState(false);
@@ -1292,7 +1312,7 @@ function RepeatBookingTab({ phone, repeats, loading, showToast, onCancel }) {
     if (endDate && startDate >= endDate) { showToast("종료일은 시작일보다 이후여야 합니다."); return; }
     setSubmitting(true);
     try {
-      await apiPost({
+      const res = await apiPost({
         action: "createRepeat",
         coachId: selCoach,
         lessonType: selLesson,
@@ -1304,10 +1324,10 @@ function RepeatBookingTab({ phone, repeats, loading, showToast, onCancel }) {
         phone: myPhone,
         cycle,
       });
-      showToast("✅ 반복 예약이 등록되었습니다!");
+      const immediateCount = (res?.immediate || []).length;
+      showToast(`✅ 반복 예약 등록 완료!${immediateCount > 0 ? " 이번 주 예약도 즉시 생성됐습니다." : ""}`);
       setShowForm(false);
-      // 목록 새로고침
-      window.location.reload();
+      if (onRefresh) onRefresh(); // 달력·목록 새로고침
     } catch(e) { showToast("❌ " + e.message); }
     finally { setSubmitting(false); }
   };
