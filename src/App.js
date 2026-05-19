@@ -690,14 +690,38 @@ function MyScreen({ showToast, theme, setTheme }) {
   const [pendingRatings, setPendingRatings] = useState([]);
   const [ratingTarget, setRatingTarget]     = useState(null);
 
-  // 미평가 레슨 폴링 — 30초마다 자동 확인 (출석완료 즉시 감지용)
+  // ── 마이페이지 캐시 (로그인 후 1회 로드, 탭 전환 시 재호출 없음)
+  const [myData, setMyData]       = useState(null);
+  const [myDataLoading, setMyDataLoading] = useState(false);
+
+  const loadMyData = useCallback(async (phone) => {
+    if (!phone) return;
+    setMyDataLoading(true);
+    try {
+      const data = await apiGet({ action: "getMyData", phone });
+      setMyData(data);
+      // 미평가 레슨 처리
+      if (data.pending && data.pending.length > 0) {
+        setPendingRatings(data.pending);
+        setRatingTarget(prev => prev ? prev : data.pending[0]);
+      }
+    } catch(e) { showToast("❌ 데이터 로딩 실패"); }
+    finally { setMyDataLoading(false); }
+  }, []);
+
+  // 로그인 후 즉시 전체 로드
+  useEffect(() => {
+    if (!authPhone) return;
+    loadMyData(authPhone);
+  }, [authPhone, loadMyData]);
+
+  // 별점 제출 후 pending 30초 폴링 (출석완료 감지)
   const checkPending = useCallback(async (phone) => {
     if (!phone) return;
     try {
       const pending = await apiGet({ action: "getMyPendingRatings", phone });
       if (pending && pending.length > 0) {
         setPendingRatings(pending);
-        // 아직 팝업 안 열었으면 자동으로 첫 번째 팝업 표시
         setRatingTarget(prev => prev ? prev : pending[0]);
       } else {
         setPendingRatings([]);
@@ -705,10 +729,8 @@ function MyScreen({ showToast, theme, setTheme }) {
     } catch(e) {}
   }, []);
 
-  // 로그인 후 즉시 + 30초마다 폴링
   useEffect(() => {
     if (!authPhone) return;
-    checkPending(authPhone);
     const t = setInterval(() => checkPending(authPhone), 30000);
     return () => clearInterval(t);
   }, [authPhone, checkPending]);
@@ -798,10 +820,11 @@ function MyScreen({ showToast, theme, setTheme }) {
           }}>{t.label}</button>
         ))}
       </div>
-      {myTab === "pass"    && <MyPassTab    phone={authPhone} />}
-      {myTab === "booking" && <MyBookingTab phone={authPhone} showToast={showToast} />}
-      {myTab === "log"     && <MyLogTab     phone={authPhone} />}
-      {myTab === "swing"   && <MySwingTab   phone={authPhone} />}
+      {myTab === "pass"    && <MyPassTab    phone={authPhone} initData={myData?.passes}   loading={myDataLoading} />}
+      {myTab === "booking" && <MyBookingTab phone={authPhone} initData={myData?.bookings} loading={myDataLoading} showToast={showToast}
+                                            onRefreshMyData={() => loadMyData(authPhone)} />}
+      {myTab === "log"     && <MyLogTab     phone={authPhone} initData={myData?.logs}     loading={myDataLoading} />}
+      {myTab === "swing"   && <MySwingTab   phone={authPhone} initData={myData?.swing}    loading={myDataLoading} />}
       {myTab === "setting" && <MySettingTab phone={authPhone} showToast={showToast} theme={theme} setTheme={setTheme} />}
     </div>
   );
@@ -916,12 +939,13 @@ function RatingPopup({ target, phone, onSubmit, onClose }) {
   );
 }
 
-function MyPassTab({ phone }) {
-  const [passes, setPasses]   = useState([]);
-  const [loading, setLoading] = useState(true);
+function MyPassTab({ phone, initData, loading: initLoading }) {
+  const [passes, setPasses]   = useState(initData || []);
+  const [loading, setLoading] = useState(!initData && initLoading !== false);
   useEffect(() => {
+    if (initData) { setPasses(initData); setLoading(false); return; }
     apiGet({ action: "getMyPasses", phone }).then(setPasses).catch(() => {}).finally(() => setLoading(false));
-  }, [phone]);
+  }, [phone, initData]);
   if (loading) return <Spinner />;
   if (!passes.length) return <div style={{ color: "#4b5675", textAlign: "center", padding: 24, fontSize: 14 }}>보유 수강권이 없습니다.</div>;
   return passes.map(p => (
@@ -941,10 +965,10 @@ function MyPassTab({ phone }) {
   ));
 }
 
-function MyBookingTab({ phone, showToast }) {
+function MyBookingTab({ phone, showToast, initData, loading: initLoading, onRefreshMyData }) {
   const [viewMode, setViewMode]   = useState("calendar");   // "calendar" | "list" | "repeat"
-  const [bookings, setBookings]   = useState([]);
-  const [loading, setLoading]     = useState(true);
+  const [bookings, setBookings]   = useState(initData || []);
+  const [loading, setLoading]     = useState(!initData && initLoading !== false);
   const [calYear, setCalYear]     = useState(new Date().getFullYear());
   const [calMonth, setCalMonth]   = useState(new Date().getMonth());
   const [selDate, setSelDate]     = useState("");
@@ -952,14 +976,15 @@ function MyBookingTab({ phone, showToast }) {
   const [repeats, setRepeats]     = useState([]);
   const [repeatLoading, setRepeatLoading] = useState(false);
 
-  // 전체 예약 로드 (달력뷰는 전체 필요)
+  // initData 있으면 즉시 사용, 없으면 개별 로드
   useEffect(() => {
+    if (initData) { setBookings(initData); setLoading(false); return; }
     setLoading(true);
     apiGet({ action: "getMyBookings", phone, type: "all" })
       .then(rows => setBookings(rows || []))
       .catch(() => {})
       .finally(() => setLoading(false));
-  }, [phone]);
+  }, [phone, initData]);
 
   const cancel = async (id, name) => {
     if (!window.confirm("예약을 취소하시겠습니까?")) return;
@@ -1570,12 +1595,13 @@ function RepeatBookingTab({ phone, repeats, loading, showToast, onCancel, onRefr
   );
 }
 
-function MyLogTab({ phone }) {
-  const [logs, setLogs]       = useState([]);
-  const [loading, setLoading] = useState(true);
+function MyLogTab({ phone, initData, loading: initLoading }) {
+  const [logs, setLogs]       = useState(initData || []);
+  const [loading, setLoading] = useState(!initData && initLoading !== false);
   useEffect(() => {
+    if (initData) { setLogs(initData); setLoading(false); return; }
     apiGet({ action: "getMyLessonLog", phone }).then(setLogs).catch(() => {}).finally(() => setLoading(false));
-  }, [phone]);
+  }, [phone, initData]);
   if (loading) return <Spinner />;
   if (!logs.length) return <div style={{ color: "#4b5675", textAlign: "center", fontSize: 14, padding: 20 }}>레슨 일지가 없습니다.</div>;
   return logs.map((l, i) => (
@@ -1601,12 +1627,13 @@ function MyLogTab({ phone }) {
   ));
 }
 
-function MySwingTab({ phone }) {
-  const [archive, setArchive] = useState([]);
-  const [loading, setLoading] = useState(true);
+function MySwingTab({ phone, initData, loading: initLoading }) {
+  const [archive, setArchive] = useState(initData || []);
+  const [loading, setLoading] = useState(!initData && initLoading !== false);
   useEffect(() => {
+    if (initData) { setArchive(initData); setLoading(false); return; }
     apiGet({ action: "getMySwingArchive", phone }).then(setArchive).catch(() => {}).finally(() => setLoading(false));
-  }, [phone]);
+  }, [phone, initData]);
   if (loading) return <Spinner />;
   if (!archive.length) return (
     <div style={{ color: "#4b5675", fontSize: 14, textAlign: "center", padding: 20, lineHeight: 1.8 }}>
