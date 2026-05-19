@@ -358,11 +358,25 @@ function BookScreen({ coaches, allLessons: initLessons, selPro, setSelPro, setDe
       .finally(() => setSlotsLoading(false));
   }, [selPro, selDate]);
 
-  // ★ 프리페치 — 날짜 목록 렌더링 시 인접 날짜 슬롯 미리 로드
+  // ★ 프로 선택 즉시 오늘~3일치 프리페치 (날짜 선택 전부터 미리 로드)
+  useEffect(() => {
+    if (!selPro) return;
+    const prefetchDates = dateList.slice(0, 4); // 오늘 포함 4일
+    prefetchDates.forEach(date => {
+      const cacheKey = selPro.id + "_" + date;
+      if (!slotCacheRef.current[cacheKey]) {
+        apiGet({ action: "getSlots", coachId: selPro.id, date })
+          .then(data => { slotCacheRef.current[cacheKey] = data; })
+          .catch(() => {});
+      }
+    });
+  }, [selPro]); // selPro 바뀔 때마다 실행
+
+  // ★ 날짜 선택 시 인접 날짜 추가 프리페치
   useEffect(() => {
     if (!selPro || !selDate) return;
     const idx = dateList.indexOf(selDate);
-    const prefetchDates = dateList.slice(idx + 1, idx + 3); // 다음 2일 미리 로드
+    const prefetchDates = dateList.slice(idx + 1, idx + 4); // 다음 3일
     prefetchDates.forEach(date => {
       const cacheKey = selPro.id + "_" + date;
       if (!slotCacheRef.current[cacheKey]) {
@@ -440,7 +454,18 @@ function BookScreen({ coaches, allLessons: initLessons, selPro, setSelPro, setDe
               );
             })}
           </div>
-          <Btn onClick={() => setStep(2)} disabled={!selPro}>다음 → 날짜·시간 선택</Btn>
+          <Btn onClick={() => {
+            setStep(2);
+            // 오늘 날짜 자동 선택 (캐시 있으면 즉시 표시)
+            if (!selDate && selPro) {
+              const today = dateList[0];
+              const cacheKey = selPro.id + "_" + today;
+              if (slotCacheRef.current[cacheKey]) {
+                setSelDate(today);
+                setSlots(slotCacheRef.current[cacheKey]);
+              }
+            }
+          }} disabled={!selPro}>다음 → 날짜·시간 선택</Btn>
         </div>
       )}
 
