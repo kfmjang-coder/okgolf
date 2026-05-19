@@ -1,70 +1,58 @@
-// ============================================================
-//  api/gas.js — Vercel Serverless Function
-//  server.js 대체 · React → 이 파일 → Google Apps Script
-// ============================================================
+// api/gas.js — Vercel Serverless Function
 const axios = require("axios");
 
-const GAS_URL = process.env.GAS_URL; // Vercel 환경변수에서 읽음
+const GAS_URL = process.env.GAS_URL;
 
-export default async function handler(req, res) {
-  // CORS
+module.exports = async function handler(req, res) {
   res.setHeader("Access-Control-Allow-Origin", "*");
   res.setHeader("Access-Control-Allow-Methods", "GET,POST,OPTIONS");
   res.setHeader("Access-Control-Allow-Headers", "Content-Type");
+
   if (req.method === "OPTIONS") return res.status(200).end();
 
   if (!GAS_URL) {
-    return res.status(500).json({ ok: false, error: "GAS_URL 환경변수가 설정되지 않았습니다." });
+    return res.status(500).json({ ok: false, error: "GAS_URL 환경변수 없음" });
   }
 
   try {
+    // GET/POST 모두 GAS에는 POST로 전송
+    const body = req.method === "GET"
+      ? JSON.stringify(req.query)
+      : (typeof req.body === "string" ? req.body : JSON.stringify(req.body));
+
+    console.log("[gas.js] body:", body.slice(0, 120));
+
     let response;
 
-    // ── GET 요청
-    if (req.method === "GET") {
-      response = await axios.get(GAS_URL, {
-        params: req.query,
+    // 1차 POST
+    try {
+      response = await axios.post(GAS_URL, body, {
         timeout: 30000,
+        maxRedirects: 0,
+        headers: { "Content-Type": "application/json" },
+        validateStatus: (s) => s < 400 || s === 302,
       });
-
-    // ── POST 요청 (GAS 302 리디렉션 처리 필수)
-    } else if (req.method === "POST") {
-      const body = typeof req.body === "string"
-        ? req.body
-        : JSON.stringify(req.body);
-
-      // 1차: maxRedirects:0 으로 POST — 302 응답 수신
-      try {
-        response = await axios.post(GAS_URL, body, {
-          timeout: 30000,
-          maxRedirects: 0,
-          headers: { "Content-Type": "application/json" },
-          validateStatus: s => s < 400 || s === 302,
-        });
-      } catch (e) {
-        if (e.response?.status === 302) {
-          response = e.response;
-        } else {
-          throw e;
-        }
+    } catch (e) {
+      if (e.response && e.response.status === 302) {
+        response = e.response;
+      } else {
+        throw e;
       }
+    }
 
-      // 302면 Location URL로 다시 POST (body 유지)
-      if (response.status === 302) {
-        const location = response.headers["location"];
-        response = await axios.post(location, body, {
-          timeout: 30000,
-          headers: { "Content-Type": "application/json" },
-        });
-      }
-    } else {
-      return res.status(405).json({ ok: false, error: "Method not allowed" });
+    // 302이면 Location으로 다시 POST
+    if (response.status === 302) {
+      const location = response.headers["location"];
+      response = await axios.post(location, body, {
+        timeout: 30000,
+        headers: { "Content-Type": "application/json" },
+      });
     }
 
     return res.status(200).json(response.data);
 
   } catch (err) {
-    console.error("GAS 오류:", err.message);
+    console.error("[gas.js] 오류:", err.message);
     return res.status(502).json({ ok: false, error: err.message });
   }
-}
+};
