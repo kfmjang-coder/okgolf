@@ -1672,27 +1672,26 @@ function WriteForm({ coaches, adminPw, onSubmit, onCancel }) {
   const [proTag, setProTag]     = useState("");
   const [isSecret, setIsSecret] = useState(false);
   const [isAnon, setIsAnon]     = useState(false);
-  const [files, setFiles]       = useState([]);
+  const [imgUrls, setImgUrls]   = useState([""]); // Google Drive URL 입력
   const [loading, setLoading]   = useState(false);
   const [inputPw, setInputPw]   = useState(""); // 공지사항 작성 시 비밀번호
 
-  const handleFile = async e => {
-    const selected = Array.from(e.target.files).slice(0, 3);
-    // 이미지 5MB, 기타 파일 1MB 제한
-    const valid = selected.filter(f => {
-      const limit = isImage(f.name) ? 5 * 1024 * 1024 : 1 * 1024 * 1024;
-      if (f.size > limit) {
-        alert(`${f.name}: ${isImage(f.name) ? "이미지는 5MB" : "파일은 1MB"} 이하만 첨부 가능합니다.`);
-        return false;
-      }
-      return true;
-    });
-    if (!valid.length) return;
-    const processed = await Promise.all(valid.map(async f => {
-      const data = isImage(f.name) ? await compressImage(f) : await fileToBase64(f);
-      return { name: f.name, type: f.type, size: f.size, data };
-    }));
-    setFiles(prev => [...prev, ...processed].slice(0, 3));
+  // Drive URL → 직접 표시 가능한 URL로 변환
+  const convertDriveUrl = (u) => {
+    if (!u) return "";
+    const m1 = u.match(/\/file\/d\/([^/]+)/);
+    if (m1) return `https://drive.google.com/uc?export=view&id=${m1[1]}`;
+    const m2 = u.match(/[?&]id=([^&]+)/);
+    if (m2) return `https://drive.google.com/uc?export=view&id=${m2[1]}`;
+    return u;
+  };
+
+  // 유효한 이미지 URL만 attachments로 변환
+  const getAttachments = () => {
+    return imgUrls
+      .map(u => u.trim())
+      .filter(u => u.length > 0)
+      .map(u => ({ type: "url", data: convertDriveUrl(u), name: "이미지" }));
   };
 
   const handleSubmit = async () => {
@@ -1705,7 +1704,7 @@ function WriteForm({ coaches, adminPw, onSubmit, onCancel }) {
     }
     setLoading(true);
     try {
-      await onSubmit({ category, title, content, name, phone, proTag, isSecret, isAnon, attachments: JSON.stringify(files), password: effectivePw || "" });
+      await onSubmit({ category, title, content, name, phone, proTag, isSecret, isAnon, attachments: JSON.stringify(getAttachments()), password: effectivePw || "" });
     } finally { setLoading(false); }
   };
 
@@ -1779,17 +1778,36 @@ function WriteForm({ coaches, adminPw, onSubmit, onCancel }) {
         <input placeholder="이름" value={name} onChange={e => setName(e.target.value)} style={{ ...INP, flex: 1 }} />
         <input placeholder="연락처" value={phone} onChange={e => setPhone(e.target.value)} style={{ ...INP, flex: 1 }} />
       </div>
+      {/* 이미지 URL 첨부 (Google Drive) */}
       <div style={{ marginBottom: 10 }}>
-        <label style={{ display: "inline-block", padding: "6px 14px", borderRadius: 7, background: "#1a1e28", border: "1px dashed #2d3347", color: "#94a3b8", fontSize: 11, cursor: "pointer" }}>
-          📎 파일 선택 (최대 3개)
-          <input type="file" multiple accept={category === "스윙분석/질문방" ? "image/*,video/mp4" : "image/*"} hidden onChange={handleFile} />
-        </label>
-        {files.map((f, i) => (
-          <div key={i} style={{ display: "flex", alignItems: "center", gap: 6, marginTop: 4 }}>
-            <span style={{ fontSize: 11, color: "#94a3b8" }}>{f.name}</span>
-            <button onClick={() => setFiles(p => p.filter((_, j) => j !== i))} style={{ fontSize: 10, color: "#f87171", background: "none", border: "none", cursor: "pointer" }}>✕</button>
+        <div style={{ fontSize: 10, color: "#4b5675", marginBottom: 6, display:"flex", alignItems:"center", justifyContent:"space-between" }}>
+          <span>📎 이미지 첨부 (Google Drive URL)</span>
+          {imgUrls.length < 3 && (
+            <button onClick={() => setImgUrls(p => [...p, ""])}
+              style={{ fontSize: 10, color: "#38bdf8", background:"none", border:"none", cursor:"pointer" }}>
+              + 추가
+            </button>
+          )}
+        </div>
+        {imgUrls.map((u, i) => (
+          <div key={i} style={{ display:"flex", gap:4, marginBottom:4, alignItems:"center" }}>
+            <input
+              placeholder="https://drive.google.com/file/d/..."
+              value={u}
+              onChange={e => setImgUrls(p => p.map((v, j) => j===i ? e.target.value : v))}
+              style={{ ...INP, flex:1, fontSize:10 }}
+            />
+            {imgUrls.length > 1 && (
+              <button onClick={() => setImgUrls(p => p.filter((_,j) => j!==i))}
+                style={{ fontSize:12, color:"#f87171", background:"none", border:"none", cursor:"pointer" }}>✕</button>
+            )}
           </div>
         ))}
+        {imgUrls.some(u=>u.trim()) && (
+          <div style={{ fontSize:9, color:"#4b5675", marginTop:4, padding:"4px 8px", background:"rgba(56,189,248,.05)", borderRadius:5, border:"1px solid rgba(56,189,248,.12)" }}>
+            💡 Drive → 파일 우클릭 → 공유 → "링크가 있는 모든 사용자" → 링크 복사
+          </div>
+        )}
       </div>
       {category === "스윙분석/질문방" && (
         <label style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6, padding: "8px 10px", background: "rgba(251,191,36,.06)", border: "1px solid rgba(251,191,36,.2)", borderRadius: 8, cursor: "pointer" }}>
