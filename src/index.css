@@ -52,6 +52,7 @@ body {
   color: var(--text);
   font-family: 'Noto Sans KR', sans-serif;
   -webkit-font-smoothing: antialiased;
+  font-size: 15px;
   transition: background .25s, color .25s;
 }
 
