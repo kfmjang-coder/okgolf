@@ -2208,6 +2208,7 @@ function AdminScreen({ coaches, setCoaches, showToast, onLogin }) {
         const l = await apiPost({ action: "getReports", password: usePw });
         setReports(l || []);
       }
+      // students 탭은 AdminStudentTab 내부에서 자체 로드
     } catch (e) {
       setStatsLoading(false);
       setLoadError(e.message);
@@ -2262,14 +2263,16 @@ function AdminScreen({ coaches, setCoaches, showToast, onLogin }) {
         { id:"timeline", label:"📅 타임라인" },
         { id:"dash",     label:"📊 현황"     },
         { id:"attend",   label:"✅ 출석"     },
+        { id:"students", label:"👥 수강생"   },
         { id:"pro",      label:"🏌️ 프로"    },
         { id:"report",   label:"🚨 신고"     },
       ]
     : [
-        { id:"dash",   label:"📊 현황" },
-        { id:"attend", label:"✅ 출석" },
-        { id:"pro",    label:"🏌️ 프로"},
-        { id:"report", label:"🚨 신고" },
+        { id:"dash",     label:"📊 현황" },
+        { id:"attend",   label:"✅ 출석" },
+        { id:"students", label:"👥 수강생"},
+        { id:"pro",      label:"🏌️ 프로"},
+        { id:"report",   label:"🚨 신고" },
       ];
 
   return (
@@ -2304,6 +2307,7 @@ function AdminScreen({ coaches, setCoaches, showToast, onLogin }) {
       {adminTab === "attend"   && <AdminAttendTab list={attend} adminPw={adminPw} showToast={showToast} onDone={() => loadData(adminPw, "attend")} />}
       {adminTab === "pro"      && <AdminProTab list={proList} adminPw={adminPw} showToast={showToast} onDone={() => loadData(adminPw, "pro")} setCoaches={setCoaches} />}
       {adminTab === "report"   && <AdminReportTab list={reports} adminPw={adminPw} showToast={showToast} onDone={() => loadData(adminPw, "report")} />}
+      {adminTab === "students" && <AdminStudentTab adminPw={adminPw} showToast={showToast} />}
     </div>
   );
 }
@@ -2609,6 +2613,303 @@ function AdminProTab({ list, adminPw, showToast, onDone, setCoaches }) {
           </div>
         </div>
       ))}
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────
+//  👥 수강생 관리 탭 (검색 + 상세 + 수강권 발급)
+// ─────────────────────────────────────────────
+function AdminStudentTab({ adminPw, showToast }) {
+  const [keyword, setKeyword]     = useState("");
+  const [students, setStudents]   = useState([]);
+  const [loading, setLoading]     = useState(false);
+  const [selStudent, setSelStudent] = useState(null); // 선택된 수강생
+  const [detail, setDetail]       = useState(null);   // 상세 데이터
+  const [detailLoading, setDetailLoading] = useState(false);
+  const [showIssue, setShowIssue] = useState(false);  // 수강권 발급 폼
+  // 수강권 발급 폼 상태
+  const [issueType, setIssueType]   = useState("10회권");
+  const [issuePrice, setIssuePrice] = useState("");
+  const [issueMethod, setIssueMethod] = useState("현금");
+  const [issueSubmitting, setIssueSubmitting] = useState(false);
+
+  const PASS_TYPES = ["10회권","20회권","30회권","월정액(주2회)","월정액(주3회)"];
+  const PAY_METHODS = ["현금","카드","계좌이체","카카오페이"];
+  const PASS_PRICE  = { "10회권":450000,"20회권":800000,"30회권":1100000,"월정액(주2회)":320000,"월정액(주3회)":450000 };
+
+  // 검색
+  const search = useCallback(async () => {
+    setLoading(true);
+    setSelStudent(null);
+    setDetail(null);
+    try {
+      const data = await apiPost({ action:"getStudents", keyword: keyword.trim(), password:adminPw });
+      setStudents(data || []);
+    } catch(e) { showToast("❌ " + e.message); }
+    finally { setLoading(false); }
+  }, [keyword, adminPw]);
+
+  // 초기 전체 목록 로드
+  useEffect(() => { search(); }, []);
+
+  // 수강생 상세 조회
+  const loadDetail = async (student) => {
+    setSelStudent(student);
+    setDetail(null);
+    setShowIssue(false);
+    setDetailLoading(true);
+    try {
+      const data = await apiPost({ action:"getStudentDetail", studentId:student.id, password:adminPw });
+      setDetail(data);
+    } catch(e) { showToast("❌ " + e.message); }
+    finally { setDetailLoading(false); }
+  };
+
+  // 수강권 발급
+  const issuePass = async () => {
+    if (!selStudent) return;
+    setIssueSubmitting(true);
+    try {
+      await apiPost({
+        action:"issuePass", studentId:selStudent.id,
+        passType:issueType,
+        paidAmount: issuePrice || PASS_PRICE[issueType],
+        payMethod:issueMethod,
+        password:adminPw,
+      });
+      showToast("✅ 수강권 발급 완료");
+      setShowIssue(false);
+      await loadDetail(selStudent); // 상세 새로고침
+    } catch(e) { showToast("❌ " + e.message); }
+    finally { setIssueSubmitting(false); }
+  };
+
+  const statusColor = { "예약":"#34d399","완료":"#38bdf8","노쇼":"#f87171","취소":"#4b5675" };
+
+  return (
+    <div style={{ display:"flex", gap:12, height:"calc(100vh - 160px)", overflow:"hidden" }}>
+
+      {/* 왼쪽: 수강생 목록 */}
+      <div style={{ width:260, flexShrink:0, display:"flex", flexDirection:"column", gap:8 }}>
+        {/* 검색창 */}
+        <div style={{ display:"flex", gap:6 }}>
+          <input
+            placeholder="이름 또는 연락처 검색"
+            value={keyword}
+            onChange={e => setKeyword(e.target.value)}
+            onKeyDown={e => e.key === "Enter" && search()}
+            style={{ ...INP, flex:1, fontSize:11 }}
+          />
+          <button onClick={search} style={{
+            padding:"0 12px", borderRadius:8, background:"#34d399",
+            color:"#000", border:"none", fontWeight:700, fontSize:11, cursor:"pointer",
+          }}>검색</button>
+        </div>
+
+        {/* 수강생 수 */}
+        <div style={{ fontSize:10, color:"#4b5675" }}>
+          총 {students.length}명
+        </div>
+
+        {/* 목록 */}
+        <div style={{ flex:1, overflowY:"auto" }}>
+          {loading ? <Spinner /> : students.length === 0
+            ? <div style={{ color:"#4b5675", fontSize:12, textAlign:"center", padding:20 }}>수강생이 없습니다.</div>
+            : students.map(s => (
+              <div key={s.id} onClick={() => loadDetail(s)} style={{
+                padding:"9px 11px", borderRadius:9, marginBottom:5, cursor:"pointer",
+                background: selStudent?.id === s.id ? "rgba(52,211,153,.1)" : "#181c25",
+                border:`1px solid ${selStudent?.id === s.id ? "#34d399" : "#2d3347"}`,
+                transition:"all .12s",
+              }}>
+                <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:3 }}>
+                  <span style={{ fontSize:12, fontWeight:700 }}>{s.name}</span>
+                  {s.passCount > 0 && (
+                    <span style={{ fontSize:9, padding:"1px 5px", borderRadius:3, background:"rgba(52,211,153,.15)", color:"#34d399", border:"1px solid rgba(52,211,153,.3)" }}>
+                      수강권 {s.passCount}
+                    </span>
+                  )}
+                </div>
+                <div style={{ fontSize:10, color:"#4b5675", fontFamily:"monospace" }}>{s.phone}</div>
+                <div style={{ fontSize:9, color:"#4b5675", marginTop:2 }}>{s.grade} · {String(s.joinedAt||"").slice(0,10)} 등록</div>
+              </div>
+            ))
+          }
+        </div>
+      </div>
+
+      {/* 오른쪽: 수강생 상세 */}
+      <div style={{ flex:1, overflowY:"auto" }}>
+        {!selStudent ? (
+          <div style={{ display:"flex", alignItems:"center", justifyContent:"center", height:"100%", color:"#4b5675", fontSize:13 }}>
+            왼쪽에서 수강생을 선택하세요
+          </div>
+        ) : detailLoading ? <Spinner /> : detail ? (
+          <div>
+            {/* 수강생 헤더 */}
+            <div style={{
+              background:"linear-gradient(135deg,rgba(52,211,153,.1),rgba(56,189,248,.05))",
+              border:"1px solid rgba(52,211,153,.2)", borderRadius:12,
+              padding:"14px 16px", marginBottom:14,
+              display:"flex", alignItems:"center", justifyContent:"space-between",
+            }}>
+              <div>
+                <div style={{ fontSize:16, fontWeight:900, marginBottom:4 }}>{detail.student["이름"]}</div>
+                <div style={{ fontSize:11, color:"#94a3b8", fontFamily:"monospace" }}>{detail.student["연락처"]}</div>
+                <div style={{ fontSize:10, color:"#4b5675", marginTop:2 }}>
+                  {detail.student["회원등급"]} · {String(detail.student["등록일시"]||"").slice(0,10)} 등록
+                </div>
+              </div>
+              <div style={{ textAlign:"right" }}>
+                <div style={{ fontSize:22, fontWeight:900, color:"#34d399" }}>{detail.passes?.filter(p=>p["상태"]==="활성").length || 0}</div>
+                <div style={{ fontSize:10, color:"#4b5675" }}>활성 수강권</div>
+              </div>
+            </div>
+
+            {/* 수강권 섹션 */}
+            <div style={{ marginBottom:14 }}>
+              <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:8 }}>
+                <div style={{ fontSize:11, fontWeight:700, color:"#4b5675", letterSpacing:.8, textTransform:"uppercase" }}>🎫 수강권</div>
+                <button onClick={() => setShowIssue(!showIssue)} style={{
+                  fontSize:10, padding:"4px 10px", borderRadius:6, cursor:"pointer",
+                  background:"rgba(52,211,153,.15)", border:"1px solid rgba(52,211,153,.3)", color:"#34d399", fontWeight:700,
+                }}>+ 수강권 발급</button>
+              </div>
+
+              {/* 수강권 발급 폼 */}
+              {showIssue && (
+                <div style={{ background:"#181c25", border:"1px solid rgba(52,211,153,.25)", borderRadius:10, padding:12, marginBottom:10 }}>
+                  <div style={{ fontSize:11, fontWeight:700, color:"#34d399", marginBottom:10 }}>새 수강권 발급</div>
+                  <div style={{ marginBottom:8 }}>
+                    <div style={{ fontSize:9, color:"#4b5675", marginBottom:4 }}>수강권 종류</div>
+                    <div style={{ display:"flex", flexWrap:"wrap", gap:4 }}>
+                      {PASS_TYPES.map(t => (
+                        <button key={t} onClick={() => { setIssueType(t); setIssuePrice(String(PASS_PRICE[t])); }} style={{
+                          padding:"4px 8px", borderRadius:5, fontSize:10, cursor:"pointer",
+                          fontWeight: issueType===t ? 700 : 400,
+                          background: issueType===t ? "#34d399" : "#1a1e28",
+                          color: issueType===t ? "#000" : "#94a3b8",
+                          border: issueType===t ? "none" : "1px solid #2d3347",
+                        }}>{t}</button>
+                      ))}
+                    </div>
+                  </div>
+                  <div style={{ display:"flex", gap:6, marginBottom:8 }}>
+                    <div style={{ flex:1 }}>
+                      <div style={{ fontSize:9, color:"#4b5675", marginBottom:3 }}>결제금액</div>
+                      <input value={issuePrice} onChange={e=>setIssuePrice(e.target.value)}
+                        placeholder={String(PASS_PRICE[issueType])}
+                        style={{ ...INP, fontSize:11 }} />
+                    </div>
+                    <div style={{ flex:1 }}>
+                      <div style={{ fontSize:9, color:"#4b5675", marginBottom:3 }}>결제방법</div>
+                      <select value={issueMethod} onChange={e=>setIssueMethod(e.target.value)}
+                        style={{ ...INP, fontSize:11 }}>
+                        {PAY_METHODS.map(m => <option key={m}>{m}</option>)}
+                      </select>
+                    </div>
+                  </div>
+                  <div style={{ display:"flex", gap:6 }}>
+                    <button onClick={() => setShowIssue(false)} style={{
+                      flex:1, padding:"7px 0", borderRadius:7, fontSize:11, cursor:"pointer",
+                      background:"#1a1e28", border:"1px solid #2d3347", color:"#94a3b8",
+                    }}>취소</button>
+                    <button onClick={issuePass} disabled={issueSubmitting} style={{
+                      flex:2, padding:"7px 0", borderRadius:7, fontSize:11, fontWeight:700, cursor:"pointer",
+                      background:"#34d399", border:"none", color:"#000",
+                      opacity: issueSubmitting ? .6 : 1,
+                    }}>{issueSubmitting ? "발급 중..." : "✅ 발급 완료"}</button>
+                  </div>
+                </div>
+              )}
+
+              {/* 보유 수강권 목록 */}
+              {(detail.passes||[]).length === 0
+                ? <div style={{ color:"#4b5675", fontSize:11, padding:"10px 0" }}>보유 수강권 없음</div>
+                : (detail.passes||[]).map(p => (
+                  <div key={p["수강권ID"]} style={{
+                    background: p["상태"]==="활성" ? "rgba(52,211,153,.06)" : "transparent",
+                    border:`1px solid ${p["상태"]==="활성" ? "rgba(52,211,153,.2)" : "#2d3347"}`,
+                    borderRadius:8, padding:"9px 12px", marginBottom:6,
+                    display:"flex", alignItems:"center", gap:10,
+                  }}>
+                    <div style={{ flex:1 }}>
+                      <div style={{ fontSize:11, fontWeight:700, marginBottom:2 }}>
+                        {p["수강권종류"]}
+                        <span style={{ fontSize:9, marginLeft:6, padding:"1px 5px", borderRadius:3,
+                          background: p["상태"]==="활성" ? "rgba(52,211,153,.15)" : "rgba(148,163,184,.1)",
+                          color: p["상태"]==="활성" ? "#34d399" : "#4b5675",
+                        }}>{p["상태"]}</span>
+                      </div>
+                      <div style={{ fontSize:10, color:"#94a3b8" }}>만료 {String(p["만료일"]||"").slice(0,10)}</div>
+                    </div>
+                    <div style={{ textAlign:"right" }}>
+                      <div style={{ fontSize:18, fontWeight:900, color:"#34d399", fontFamily:"monospace" }}>
+                        {p["잔여횟수"]}
+                      </div>
+                      <div style={{ fontSize:9, color:"#4b5675" }}>/ {p["총횟수"]}회</div>
+                    </div>
+                  </div>
+                ))
+              }
+            </div>
+
+            {/* 예약 이력 */}
+            <div style={{ marginBottom:14 }}>
+              <div style={{ fontSize:11, fontWeight:700, color:"#4b5675", letterSpacing:.8, textTransform:"uppercase", marginBottom:8 }}>
+                📋 예약 이력 (최근 {(detail.bookings||[]).length}건)
+              </div>
+              {(detail.bookings||[]).length === 0
+                ? <div style={{ color:"#4b5675", fontSize:11 }}>예약 이력 없음</div>
+                : (detail.bookings||[]).slice().reverse().slice(0,10).map(b => {
+                  const sc = statusColor[b["상태"]] || "#4b5675";
+                  return (
+                    <div key={b["예약ID"]} style={{
+                      display:"flex", alignItems:"center", gap:8,
+                      padding:"7px 10px", borderRadius:7, marginBottom:4,
+                      background:"#181c25", border:`1px solid #2d3347`,
+                      borderLeft:`3px solid ${sc}`,
+                    }}>
+                      <div style={{ flex:1 }}>
+                        <div style={{ fontSize:11, fontWeight:600 }}>{b["프로명"]} · {b["레슨종류"]}</div>
+                        <div style={{ fontSize:10, color:"#4b5675", fontFamily:"monospace" }}>
+                          {String(b["날짜"]||"").slice(0,10)} {String(b["시작시간"]||"").slice(0,5)}
+                        </div>
+                      </div>
+                      <span style={{ fontSize:9, padding:"2px 6px", borderRadius:3, fontWeight:700,
+                        background:`${sc}22`, color:sc }}>
+                        {b["상태"]}
+                      </span>
+                    </div>
+                  );
+                })
+              }
+            </div>
+
+            {/* 레슨 일지 */}
+            {(detail.lessonLogs||[]).length > 0 && (
+              <div>
+                <div style={{ fontSize:11, fontWeight:700, color:"#4b5675", letterSpacing:.8, textTransform:"uppercase", marginBottom:8 }}>
+                  📝 레슨 일지 ({(detail.lessonLogs||[]).length}회차)
+                </div>
+                {(detail.lessonLogs||[]).slice(0,5).map((l,i) => (
+                  <div key={l["일지ID"]||i} style={{
+                    padding:"8px 10px", borderRadius:7, marginBottom:4,
+                    background:"#181c25", border:"1px solid #2d3347",
+                  }}>
+                    <div style={{ display:"flex", justifyContent:"space-between", marginBottom:3 }}>
+                      <span style={{ fontSize:10, fontWeight:700, color:"#38bdf8" }}>{l["회차번호"]}회차</span>
+                      <span style={{ fontSize:9, color:"#4b5675" }}>{String(l["레슨날짜"]||"").slice(0,10)}</span>
+                    </div>
+                    {l["코멘트"] && <div style={{ fontSize:10, color:"#94a3b8", lineHeight:1.5 }}>{l["코멘트"]}</div>}
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        ) : null}
+      </div>
     </div>
   );
 }
