@@ -1178,6 +1178,7 @@ function WriteForm({ coaches, adminPw, onSubmit, onCancel }) {
   const [isAnon, setIsAnon]     = useState(false);
   const [files, setFiles]       = useState([]);
   const [loading, setLoading]   = useState(false);
+  const [inputPw, setInputPw]   = useState(""); // 공지사항 작성 시 비밀번호
 
   const handleFile = async e => {
     const fs = Array.from(e.target.files).slice(0, 3);
@@ -1190,10 +1191,15 @@ function WriteForm({ coaches, adminPw, onSubmit, onCancel }) {
 
   const handleSubmit = async () => {
     if (!title.trim() || !name.trim() || !phone.trim()) { alert("제목, 이름, 연락처를 입력해주세요."); return; }
-    if (category === "공지사항" && adminPw !== "golf2026!") { alert("공지사항은 관리자만 작성 가능합니다."); return; }
+    // 공지사항: 이미 로그인된 adminPw 또는 직접 입력한 비밀번호로 확인
+    const effectivePw = adminPw || inputPw;
+    if (category === "공지사항" && effectivePw !== "golf2026!") {
+      alert("공지사항은 관리자 비밀번호가 필요합니다.");
+      return;
+    }
     setLoading(true);
     try {
-      await onSubmit({ category, title, content, name, phone, proTag, isSecret, isAnon, attachments: JSON.stringify(files), password: adminPw || "" });
+      await onSubmit({ category, title, content, name, phone, proTag, isSecret, isAnon, attachments: JSON.stringify(files), password: effectivePw || "" });
     } finally { setLoading(false); }
   };
 
@@ -1211,6 +1217,40 @@ function WriteForm({ coaches, adminPw, onSubmit, onCancel }) {
           }}>{c}</button>
         ))}
       </div>
+      {/* 공지사항 선택 시 비밀번호 입력 (미로그인 상태일 때) */}
+      {category === "공지사항" && !adminPw && (
+        <div style={{
+          marginBottom: 10, padding: "10px 12px",
+          background: "rgba(248,113,113,.07)", border: "1px solid rgba(248,113,113,.25)",
+          borderRadius: 9,
+        }}>
+          <div style={{ fontSize: 11, fontWeight: 700, color: "#f87171", marginBottom: 6 }}>
+            🔒 관리자 전용 카테고리
+          </div>
+          <div style={{ fontSize: 10, color: "#94a3b8", marginBottom: 8 }}>
+            공지사항 작성은 관리자 비밀번호가 필요합니다.
+          </div>
+          <input
+            type="password"
+            placeholder="관리자 비밀번호 입력"
+            value={inputPw}
+            onChange={e => setInputPw(e.target.value)}
+            style={{ ...INP, fontSize: 11 }}
+          />
+        </div>
+      )}
+      {/* 공지사항 + 이미 로그인된 상태 */}
+      {category === "공지사항" && adminPw && (
+        <div style={{
+          marginBottom: 10, padding: "8px 12px",
+          background: "rgba(52,211,153,.07)", border: "1px solid rgba(52,211,153,.2)",
+          borderRadius: 9, display: "flex", alignItems: "center", gap: 8,
+        }}>
+          <span style={{ fontSize: 14 }}>✅</span>
+          <div style={{ fontSize: 11, color: "#34d399" }}>관리자로 로그인됨 — 공지사항 작성 가능</div>
+        </div>
+      )}
+
       {category === "스윙분석/질문방" && (
         <div style={{ marginBottom: 10 }}>
           <div style={{ fontSize: 11, color: "#4b5675", marginBottom: 4 }}>프로 태그 *</div>
@@ -1959,7 +1999,7 @@ function AdminTimeline({ coaches, adminPw, showToast }) {
   );
 }
 
-function AdminScreen({ coaches, setCoaches, showToast }) {
+function AdminScreen({ coaches, setCoaches, showToast, onLogin }) {
   const [pw, setPw]             = useState("");
   const [adminPw, setAdminPw]   = useState("");
   const [adminTab, setAdminTab] = useState("timeline");
@@ -2022,6 +2062,7 @@ function AdminScreen({ coaches, setCoaches, showToast }) {
       setStats(s);
       setStatsLoading(false);
       setAdminTab(isPC ? "timeline" : "dash");
+      if (onLogin) onLogin(pw); // 전역 adminPw 공유 (게시판 공지사항 작성용)
     } catch (e) {
       setStatsLoading(false);
       showToast("❌ " + e.message);
@@ -2068,7 +2109,7 @@ function AdminScreen({ coaches, setCoaches, showToast }) {
         <div style={{ display: "flex", gap: 8 }}>
           <button onClick={() => loadData(adminPw, adminTab)}
             style={{ fontSize: 11, background: "none", border: "none", color: "#94a3b8", cursor: "pointer" }}>🔄</button>
-          <button onClick={() => { setAdminPw(""); setPw(""); setStats(null); }}
+          <button onClick={() => { setAdminPw(""); setPw(""); setStats(null); if(onLogin) onLogin(""); }}
             style={{ fontSize: 11, background: "none", border: "none", color: "#f87171", cursor: "pointer" }}>로그아웃</button>
         </div>
       </div>
@@ -2431,6 +2472,7 @@ export default function App() {
   const [selPro, setSelPro]       = useState(null);
   const [bookStep, setBookStep]   = useState(1);
   const [detailPro, setDetailPro] = useState(null);
+  const [globalAdminPw, setGlobalAdminPw] = useState(""); // 관리자 로그인 시 공유
 
   const showToast = useCallback(msg => setToast(msg), []);
 
@@ -2469,8 +2511,8 @@ export default function App() {
         {tab === "home"  && <HomeScreen  coaches={coaches} selPro={selPro} setSelPro={setSelPro} setTab={setTab} setBookStep={setBookStep} setDetailPro={setDetailPro} />}
         {tab === "book"  && <BookScreen  coaches={coaches} selPro={selPro} setSelPro={setSelPro} setDetailPro={setDetailPro} showToast={showToast} setTab={setTab} />}
         {tab === "my"    && <MyScreen    showToast={showToast} />}
-        {tab === "board" && <BoardScreen coaches={coaches} myPhone="" adminPw="" showToast={showToast} />}
-        {tab === "admin" && <AdminScreen coaches={coaches} setCoaches={setCoaches} showToast={showToast} />}
+        {tab === "board" && <BoardScreen coaches={coaches} myPhone="" adminPw={globalAdminPw} showToast={showToast} />}
+        {tab === "admin" && <AdminScreen coaches={coaches} setCoaches={setCoaches} showToast={showToast} onLogin={setGlobalAdminPw} />}
       </div>
 
       {/* 탭바 */}
