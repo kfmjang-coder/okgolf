@@ -2619,6 +2619,7 @@ function AdminScreen({ coaches, setCoaches, showToast, onLogin }) {
         { id:"attend",   label:"✅ 출석"     },
         { id:"students", label:"👥 수강생"   },
         { id:"pro",      label:"🏌️ 프로"    },
+        { id:"block",    label:"🚫 차단"     },
         { id:"report",   label:"🚨 신고"     },
       ]
     : [
@@ -2626,6 +2627,7 @@ function AdminScreen({ coaches, setCoaches, showToast, onLogin }) {
         { id:"attend",   label:"✅ 출석" },
         { id:"students", label:"👥 수강생"},
         { id:"pro",      label:"🏌️ 프로"},
+        { id:"block",    label:"🚫 차단" },
         { id:"report",   label:"🚨 신고" },
       ];
 
@@ -2662,6 +2664,7 @@ function AdminScreen({ coaches, setCoaches, showToast, onLogin }) {
       {adminTab === "pro"      && <AdminProTab list={proList} adminPw={adminPw} showToast={showToast} onDone={() => loadData(adminPw, "pro")} setCoaches={setCoaches} />}
       {adminTab === "report"   && <AdminReportTab list={reports} adminPw={adminPw} showToast={showToast} onDone={() => loadData(adminPw, "report")} />}
       {adminTab === "students" && <AdminStudentTab adminPw={adminPw} showToast={showToast} />}
+      {adminTab === "block"    && <AdminBlockTab coaches={coaches} adminPw={adminPw} showToast={showToast} />}
     </div>
   );
 }
@@ -3302,6 +3305,307 @@ function AdminStudentTab({ adminPw, showToast }) {
           </div>
         ) : null}
       </div>
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────
+//  🚫 차단 관리 탭
+//  특정 날짜·시간 또는 매주 요일·시간 반복 차단
+// ─────────────────────────────────────────────
+function AdminBlockTab({ coaches, adminPw, showToast }) {
+  const DOW_KR = ["일","월","화","수","목","금","토"];
+
+  // 20분 단위 시간 목록
+  const TIMES = [];
+  for (let m = 6*60; m < 23*60; m += 20) {
+    TIMES.push(String(Math.floor(m/60)).padStart(2,"0") + ":" + String(m%60).padStart(2,"0"));
+  }
+
+  const [selCoach, setSelCoach]   = useState(coaches[0]?.id || "");
+  const [blocks, setBlocks]       = useState([]);
+  const [loading, setLoading]     = useState(false);
+  const [showForm, setShowForm]   = useState(false);
+
+  // 폼 상태
+  const [blockType, setBlockType] = useState("날짜");    // "날짜" | "요일"
+  const [selDate, setSelDate]     = useState("");        // 특정 날짜
+  const [selDow, setSelDow]       = useState(1);         // 요일 (0=일~6=토)
+  const [fromTime, setFromTime]   = useState("09:00");
+  const [toTime, setToTime]       = useState("12:00");
+  const [reason, setReason]       = useState("");
+  const [submitting, setSubmitting] = useState(false);
+
+  // 차단 목록 로드
+  const loadBlocks = useCallback(async () => {
+    if (!selCoach) return;
+    setLoading(true);
+    try {
+      const data = await apiGet({ action:"getBlocksByCoach", coachId:selCoach });
+      setBlocks(data || []);
+    } catch(e) { showToast("❌ " + e.message); }
+    finally { setLoading(false); }
+  }, [selCoach]);
+
+  useEffect(() => { loadBlocks(); }, [loadBlocks]);
+
+  // 차단 시간 목록 생성 (from~to 20분 단위)
+  const buildTimeList = (from, to) => {
+    const list = [];
+    const [fh, fm] = from.split(":").map(Number);
+    const [th, tm] = to.split(":").map(Number);
+    let cur = fh * 60 + fm;
+    const end = th * 60 + tm;
+    while (cur <= end) {
+      list.push(String(Math.floor(cur/60)).padStart(2,"0") + ":" + String(cur%60).padStart(2,"0"));
+      cur += 20;
+    }
+    return list;
+  };
+
+  // 차단 등록
+  const addBlock = async () => {
+    if (blockType === "날짜" && !selDate) { showToast("날짜를 선택해주세요."); return; }
+    if (!fromTime || !toTime) { showToast("시간을 선택해주세요."); return; }
+    if (fromTime > toTime) { showToast("시작 시간이 종료 시간보다 늦습니다."); return; }
+
+    setSubmitting(true);
+    try {
+      const times = buildTimeList(fromTime, toTime);
+      if (blockType === "날짜") {
+        await apiPost({
+          action: "addBlock",
+          coachId: selCoach,
+          type: "날짜",
+          range: selDate,
+          hours: JSON.stringify(times),
+          reason: reason || "차단",
+          password: adminPw,
+        });
+      } else {
+        // 요일 반복 차단
+        await apiPost({
+          action: "addBlock",
+          coachId: selCoach,
+          type: "요일",
+          range: String(selDow),
+          hours: JSON.stringify(times),
+          reason: reason || `매주 ${DOW_KR[selDow]}요일 차단`,
+          password: adminPw,
+        });
+      }
+      showToast("✅ 차단 등록 완료");
+      setShowForm(false);
+      setReason("");
+      loadBlocks();
+    } catch(e) { showToast("❌ " + e.message); }
+    finally { setSubmitting(false); }
+  };
+
+  // 차단 해제
+  const removeBlock = async (blockId) => {
+    if (!window.confirm("차단을 해제할까요?")) return;
+    try {
+      await apiPost({ action:"removeBlock", blockId, password:adminPw });
+      showToast("✅ 차단 해제 완료");
+      loadBlocks();
+    } catch(e) { showToast("❌ " + e.message); }
+  };
+
+  return (
+    <div>
+      {/* 프로 선택 */}
+      <div style={{ display:"flex", gap:6, marginBottom:12, flexWrap:"wrap" }}>
+        {coaches.filter(c=>c.status==="active").map(c => (
+          <button key={c.id} onClick={() => setSelCoach(c.id)} style={{
+            padding:"6px 12px", borderRadius:7, fontSize:11, cursor:"pointer",
+            fontWeight: selCoach===c.id ? 700 : 400,
+            background: selCoach===c.id ? (c.color||"#34d399") : "#1a1e28",
+            color: selCoach===c.id ? "#000" : "#94a3b8",
+            border: selCoach===c.id ? "none" : "1px solid #2d3347",
+          }}>{c.icon||"🏌️"} {c.name}</button>
+        ))}
+      </div>
+
+      {/* 차단 등록 버튼 */}
+      <button onClick={() => setShowForm(!showForm)} style={{
+        width:"100%", padding:"9px 0", borderRadius:9, fontSize:12, fontWeight:700,
+        cursor:"pointer", marginBottom:12,
+        background: showForm ? "#1a1e28" : "rgba(248,113,113,.15)",
+        border: showForm ? "1px solid #2d3347" : "1px solid rgba(248,113,113,.3)",
+        color: showForm ? "#94a3b8" : "#f87171",
+      }}>{showForm ? "✕ 닫기" : "🚫 차단 추가"}</button>
+
+      {/* 차단 등록 폼 */}
+      {showForm && (
+        <div style={{
+          background:"#181c25", border:"1px solid rgba(248,113,113,.2)",
+          borderRadius:12, padding:14, marginBottom:14,
+        }}>
+          <div style={{ fontSize:12, fontWeight:700, color:"#f87171", marginBottom:12 }}>차단 설정</div>
+
+          {/* 차단 유형 */}
+          <div style={{ marginBottom:10 }}>
+            <div style={{ fontSize:9, color:"#4b5675", marginBottom:4 }}>차단 유형</div>
+            <div style={{ display:"flex", gap:6 }}>
+              {[
+                { id:"날짜", label:"📅 특정 날짜", desc:"하루만" },
+                { id:"요일", label:"🔁 요일 반복", desc:"매주 반복" },
+              ].map(t => (
+                <button key={t.id} onClick={() => setBlockType(t.id)} style={{
+                  flex:1, padding:"8px 6px", borderRadius:8, fontSize:11, cursor:"pointer",
+                  fontWeight: blockType===t.id ? 700 : 400,
+                  background: blockType===t.id ? "rgba(248,113,113,.2)" : "#1a1e28",
+                  color: blockType===t.id ? "#f87171" : "#94a3b8",
+                  border: `1px solid ${blockType===t.id ? "rgba(248,113,113,.4)" : "#2d3347"}`,
+                }}>
+                  <div>{t.label}</div>
+                  <div style={{ fontSize:9, opacity:.7, marginTop:2 }}>{t.desc}</div>
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* 날짜 또는 요일 선택 */}
+          {blockType === "날짜" ? (
+            <div style={{ marginBottom:10 }}>
+              <div style={{ fontSize:9, color:"#4b5675", marginBottom:4 }}>차단 날짜 *</div>
+              <input type="date" value={selDate} onChange={e=>setSelDate(e.target.value)}
+                style={{ ...INP, fontSize:12 }} />
+            </div>
+          ) : (
+            <div style={{ marginBottom:10 }}>
+              <div style={{ fontSize:9, color:"#4b5675", marginBottom:4 }}>반복 요일 *</div>
+              <div style={{ display:"flex", gap:4 }}>
+                {DOW_KR.map((d,i) => (
+                  <button key={i} onClick={() => setSelDow(i)} style={{
+                    flex:1, padding:"7px 0", borderRadius:6, fontSize:11, cursor:"pointer",
+                    fontWeight: selDow===i ? 700 : 400,
+                    background: selDow===i ? "#f87171" : "#1a1e28",
+                    color: selDow===i ? "#fff" : i===0?"#f87171":i===6?"#38bdf8":"#94a3b8",
+                    border: selDow===i ? "none" : "1px solid #2d3347",
+                  }}>{d}</button>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* 시간 범위 */}
+          <div style={{ marginBottom:10 }}>
+            <div style={{ fontSize:9, color:"#4b5675", marginBottom:4 }}>차단 시간 범위 *</div>
+            <div style={{ display:"flex", alignItems:"center", gap:8 }}>
+              <select value={fromTime} onChange={e=>setFromTime(e.target.value)}
+                style={{ ...INP, flex:1, fontSize:11 }}>
+                {TIMES.map(t => <option key={t} value={t}>{t}</option>)}
+              </select>
+              <span style={{ color:"#4b5675", fontSize:12 }}>~</span>
+              <select value={toTime} onChange={e=>setToTime(e.target.value)}
+                style={{ ...INP, flex:1, fontSize:11 }}>
+                {TIMES.map(t => <option key={t} value={t}>{t}</option>)}
+              </select>
+            </div>
+            <div style={{ fontSize:9, color:"#4b5675", marginTop:4 }}>
+              {buildTimeList(fromTime, toTime).length}개 슬롯 차단 ({fromTime}~{toTime})
+            </div>
+          </div>
+
+          {/* 사유 */}
+          <div style={{ marginBottom:12 }}>
+            <div style={{ fontSize:9, color:"#4b5675", marginBottom:4 }}>사유 (선택)</div>
+            <input value={reason} onChange={e=>setReason(e.target.value)}
+              placeholder="예: 점심시간, 개인 일정, 휴무..."
+              style={{ ...INP, fontSize:11 }} />
+          </div>
+
+          {/* 미리보기 요약 */}
+          <div style={{
+            background:"rgba(248,113,113,.06)", border:"1px solid rgba(248,113,113,.15)",
+            borderRadius:8, padding:"8px 12px", marginBottom:12, fontSize:11,
+          }}>
+            <div style={{ color:"#f87171", fontWeight:700, marginBottom:4 }}>🚫 차단 요약</div>
+            <div style={{ color:"#94a3b8", lineHeight:1.8 }}>
+              {coaches.find(c=>c.id===selCoach)?.name}<br/>
+              {blockType==="날짜"
+                ? `📅 ${selDate || "날짜 선택 필요"}`
+                : `🔁 매주 ${DOW_KR[selDow]}요일`
+              } · {fromTime} ~ {toTime}<br/>
+              {reason && `사유: ${reason}`}
+            </div>
+          </div>
+
+          <div style={{ display:"flex", gap:8 }}>
+            <button onClick={() => setShowForm(false)} style={{
+              flex:1, padding:"8px 0", borderRadius:8, fontSize:11, cursor:"pointer",
+              background:"#1a1e28", border:"1px solid #2d3347", color:"#94a3b8",
+            }}>취소</button>
+            <button onClick={addBlock} disabled={submitting} style={{
+              flex:2, padding:"8px 0", borderRadius:8, fontSize:12, fontWeight:700,
+              cursor: submitting ? "not-allowed" : "pointer",
+              background:"rgba(248,113,113,.85)", border:"none", color:"#fff",
+              opacity: submitting ? .6 : 1,
+              fontFamily:"'Noto Sans KR', sans-serif",
+            }}>{submitting ? "등록 중..." : "🚫 차단 등록"}</button>
+          </div>
+        </div>
+      )}
+
+      {/* 차단 목록 */}
+      {loading ? <Spinner /> : blocks.length === 0 ? (
+        <div style={{ textAlign:"center", color:"#4b5675", fontSize:12, padding:"24px 0" }}>
+          등록된 차단이 없습니다.
+        </div>
+      ) : (
+        <div>
+          <div style={{ fontSize:10, color:"#4b5675", marginBottom:8 }}>
+            활성 차단 {blocks.length}건
+          </div>
+          {blocks.map(b => {
+            const times = (() => { try { return JSON.parse(b["시간목록"]||"[]"); } catch { return []; } })();
+            const isRepeat = b["유형"] === "요일";
+            return (
+              <div key={b["차단ID"]} style={{
+                background:"rgba(248,113,113,.06)", border:"1px solid rgba(248,113,113,.2)",
+                borderLeft:"3px solid #f87171",
+                borderRadius:10, padding:"10px 12px", marginBottom:8,
+                display:"flex", alignItems:"flex-start", gap:10,
+              }}>
+                <span style={{ fontSize:20, marginTop:2 }}>{isRepeat ? "🔁" : "📅"}</span>
+                <div style={{ flex:1 }}>
+                  <div style={{ display:"flex", alignItems:"center", gap:6, marginBottom:3 }}>
+                    <span style={{
+                      fontSize:9, padding:"1px 6px", borderRadius:3, fontWeight:700,
+                      background: isRepeat ? "rgba(56,189,248,.2)" : "rgba(248,113,113,.2)",
+                      color: isRepeat ? "#38bdf8" : "#f87171",
+                    }}>{isRepeat ? "요일 반복" : "특정 날짜"}</span>
+                  </div>
+                  <div style={{ fontSize:12, fontWeight:700, marginBottom:2 }}>
+                    {isRepeat
+                      ? `매주 ${DOW_KR[Number(b["날짜범위또는요일"])]}요일`
+                      : b["날짜범위또는요일"]
+                    }
+                  </div>
+                  <div style={{ fontSize:11, color:"#94a3b8" }}>
+                    {times.length > 0
+                      ? `⏰ ${times[0]} ~ ${times[times.length-1]}`
+                      : "전체 시간"
+                    } · {times.length}슬롯
+                  </div>
+                  {b["사유"] && (
+                    <div style={{ fontSize:10, color:"#4b5675", marginTop:2 }}>💬 {b["사유"]}</div>
+                  )}
+                  <div style={{ fontSize:9, color:"#2d3347", marginTop:3 }}>
+                    {String(b["등록일시"]||"").slice(0,10)} 등록
+                  </div>
+                </div>
+                <button onClick={() => removeBlock(b["차단ID"])} style={{
+                  padding:"4px 10px", borderRadius:6, fontSize:10, cursor:"pointer", flexShrink:0,
+                  background:"rgba(248,113,113,.12)", border:"1px solid rgba(248,113,113,.3)", color:"#f87171",
+                }}>해제</button>
+              </div>
+            );
+          })}
+        </div>
+      )}
     </div>
   );
 }
