@@ -2002,7 +2002,7 @@ function AdminTimeline({ coaches, adminPw, showToast }) {
 function AdminScreen({ coaches, setCoaches, showToast, onLogin }) {
   const [pw, setPw]             = useState("");
   const [adminPw, setAdminPw]   = useState("");
-  const [adminTab, setAdminTab] = useState("timeline");
+  const [adminTab, setAdminTab] = useState(() => window.innerWidth >= 768 ? "timeline" : "dash");
   const [stats, setStats]       = useState(null);
   const [statsLoading, setStatsLoading] = useState(false);
   const [attend, setAttend]     = useState([]);
@@ -2061,7 +2061,7 @@ function AdminScreen({ coaches, setCoaches, showToast, onLogin }) {
       setAdminPw(pw);
       setStats(s);
       setStatsLoading(false);
-      setAdminTab(isPC ? "timeline" : "dash");
+      setAdminTab(window.innerWidth >= 768 ? "timeline" : "dash");
       if (onLogin) onLogin(pw); // 전역 adminPw 공유 (게시판 공지사항 작성용)
     } catch (e) {
       setStatsLoading(false);
