@@ -2091,83 +2091,114 @@ function PostDetail({ post, phone, coaches, adminPw, onBack, showToast }) {
   );
 }
 
-// ── 게시판 전역 메모리 캐시 (컴포넌트 밖 — 앱 살아있는 동안 유지)
+// ── 게시판 전역 메모리 캐시
 const _boardCache = {
-  data: {},          // { "전체": [...], "공지사항": [...], ... }
-  ts  : {},          // 카테고리별 마지막 로드 시각
-  TTL : 30000,       // 30초
-  get(cat) {
-    if (!this.data[cat]) return null;
-    if (Date.now() - (this.ts[cat] || 0) > this.TTL) return null; // 만료
-    return this.data[cat];
+  data    : {},   // { "전체": { posts:[], page:1, hasMore:true } }
+  ts      : {},
+  TTL     : 30000,
+  get(cat)       { return (Date.now() - (this.ts[cat]||0) < this.TTL) ? this.data[cat] : null; },
+  set(cat, v)    { this.data[cat] = v; this.ts[cat] = Date.now(); },
+  append(cat, v) {
+    const cur = this.data[cat] || { posts:[], page:0, hasMore:true };
+    this.data[cat] = { posts:[...cur.posts, ...v.posts], page:v.page, hasMore:v.hasMore };
+    this.ts[cat] = Date.now();
   },
-  set(cat, posts) {
-    this.data[cat] = posts;
-    this.ts[cat]   = Date.now();
-  },
-  invalidate() { this.data = {}; this.ts = {}; }, // 글쓰기/삭제 후 전체 초기화
+  invalidate()   { this.data = {}; this.ts = {}; },
 };
 
+const PAGE_SIZE = 5; // 첫 화면에 보이는 개수
+
 function BoardScreen({ coaches, myPhone, adminPw, showToast }) {
-  const [cat, setCat]         = useState("전체");
-  const [posts, setPosts]     = useState(() => _boardCache.get("전체") || []);
-  const [loading, setLoading] = useState(!_boardCache.get("전체")); // 캐시 있으면 로딩 스킵
-  const [selPost, setSelPost] = useState(null);
-  const [writing, setWriting] = useState(false);
+  const [cat, setCat]           = useState("전체");
+  const [posts, setPosts]       = useState(() => _boardCache.get("전체")?.posts || []);
+  const [page, setPage]         = useState(() => _boardCache.get("전체")?.page || 0);
+  const [hasMore, setHasMore]   = useState(true);
+  const [loading, setLoading]   = useState(!_boardCache.get("전체"));
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [selPost, setSelPost]   = useState(null);
+  const [writing, setWriting]   = useState(false);
+  const bottomRef = React.useRef(null); // 무한스크롤 감지 ref
 
   const CAT_COLOR = { "공지사항": "#f87171", "자유게시판": "#38bdf8", "스윙분석/질문방": "#fbbf24" };
 
-  const load = useCallback((force = false) => {
-    const cached = _boardCache.get(cat);
+  // 첫 페이지 로드
+  const loadFirst = useCallback((forceCat, force = false) => {
+    const c = forceCat || cat;
+    const cached = _boardCache.get(c);
     if (cached && !force) {
-      // ★ 캐시 히트 — 즉시 표시 (0ms)
-      setPosts(cached);
-      setLoading(false);
+      setPosts(cached.posts); setPage(cached.page);
+      setHasMore(cached.hasMore); setLoading(false);
       return;
     }
     setLoading(true);
-    apiGet({ action: "getPosts", category: cat, phone: myPhone, page: 1 })
+    apiGet({ action:"getPosts", category:c, phone:myPhone, page:1, pageSize:PAGE_SIZE })
       .then(d => {
-        const list = d.posts || [];
-        _boardCache.set(cat, list); // 메모리 캐시 저장
-        setPosts(list);
+        const v = { posts: d.posts||[], page:1, hasMore:d.hasMore };
+        _boardCache.set(c, v);
+        setPosts(v.posts); setPage(1); setHasMore(d.hasMore);
       })
       .catch(e => showToast(e.message))
       .finally(() => setLoading(false));
   }, [cat, myPhone]);
 
-  useEffect(() => { load(); }, [load]);
+  // 다음 페이지 로드 (무한스크롤)
+  const loadMore = useCallback(() => {
+    if (loadingMore || !hasMore) return;
+    setLoadingMore(true);
+    const nextPage = page + 1;
+    apiGet({ action:"getPosts", category:cat, phone:myPhone, page:nextPage, pageSize:PAGE_SIZE })
+      .then(d => {
+        const newPosts = d.posts || [];
+        _boardCache.append(cat, { posts:newPosts, page:nextPage, hasMore:d.hasMore });
+        setPosts(prev => [...prev, ...newPosts]);
+        setPage(nextPage);
+        setHasMore(d.hasMore);
+      })
+      .catch(() => {})
+      .finally(() => setLoadingMore(false));
+  }, [cat, myPhone, page, hasMore, loadingMore]);
 
-  // 카테고리 전환 시 캐시 즉시 표시 + 백그라운드 갱신
+  useEffect(() => { loadFirst(); }, [cat]);
+
+  // IntersectionObserver — 하단 감지 시 자동 로드
+  useEffect(() => {
+    if (!bottomRef.current) return;
+    const obs = new IntersectionObserver(entries => {
+      if (entries[0].isIntersecting && hasMore && !loadingMore && !loading) {
+        loadMore();
+      }
+    }, { threshold: 0.1 });
+    obs.observe(bottomRef.current);
+    return () => obs.disconnect();
+  }, [hasMore, loadingMore, loading, loadMore]);
+
+  // 카테고리 전환
   const switchCat = (newCat) => {
+    if (newCat === cat) return;
     setCat(newCat);
+    setPage(0); setHasMore(true);
     const cached = _boardCache.get(newCat);
     if (cached) {
-      setPosts(cached);  // 즉시 표시
-      setLoading(false);
-      // 백그라운드에서 최신 데이터 갱신
-      apiGet({ action: "getPosts", category: newCat, phone: myPhone, page: 1 })
-        .then(d => {
-          const list = d.posts || [];
-          _boardCache.set(newCat, list);
-          setPosts(list);
-        })
+      setPosts(cached.posts); setPage(cached.page); setHasMore(cached.hasMore);
+      // 백그라운드 갱신
+      apiGet({ action:"getPosts", category:newCat, phone:myPhone, page:1, pageSize:PAGE_SIZE })
+        .then(d => { _boardCache.set(newCat, {posts:d.posts||[],page:1,hasMore:d.hasMore}); setPosts(d.posts||[]); setPage(1); setHasMore(d.hasMore); })
         .catch(() => {});
     }
   };
 
   if (selPost) return <PostDetail post={selPost} phone={myPhone} coaches={coaches} adminPw={adminPw}
-    onBack={() => { setSelPost(null); }} showToast={showToast} />;
+    onBack={() => setSelPost(null)} showToast={showToast} />;
   if (writing) return (
     <div style={{ padding: "12px 14px" }}>
       <div style={{ fontSize: 16, fontWeight: 900, marginBottom: 14 }}>✏️ 글쓰기</div>
       <WriteForm coaches={coaches} adminPw={adminPw} onCancel={() => setWriting(false)}
         onSubmit={async p => {
-          await apiPost({ action: "createPost", ...p });
+          await apiPost({ action:"createPost", ...p });
           showToast("✅ 등록 완료");
-          _boardCache.invalidate(); // 캐시 무효화
+          _boardCache.invalidate();
           setWriting(false);
-          load(true); // 강제 새로고침
+          loadFirst(cat, true);
         }} />
     </div>
   );
@@ -2187,28 +2218,55 @@ function BoardScreen({ coaches, myPhone, adminPw, showToast }) {
           }}>{c}</button>
         ))}
       </div>
-      {loading ? <Spinner /> : posts.map(p => (
-        <div key={p.게시글ID} onClick={() => setSelPost(p)} style={{
-          background: p.상단고정 ? "rgba(251,191,36,.03)" : "#181c25",
-          border: `1px solid ${p.상단고정 ? "rgba(251,191,36,.4)" : "#2d3347"}`,
-          borderRadius: 10, padding: "10px 12px", marginBottom: 8, cursor: "pointer",
-        }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 5, marginBottom: 5 }}>
-            <span style={{ fontSize: 11, padding: "2px 6px", borderRadius: 3, fontWeight: 700, background: (CAT_COLOR[p.카테고리] || "#94a3b8") + "22", color: CAT_COLOR[p.카테고리] || "#94a3b8", border: `1px solid ${(CAT_COLOR[p.카테고리] || "#94a3b8")}44` }}>{p.카테고리}</span>
-            {p.상단고정 && <span style={{ fontSize: 11, color: "#fbbf24" }}>📌</span>}
-            {p._isSecret && <span style={{ fontSize: 11, color: "#fbbf24" }}>🔒</span>}
-          </div>
-          <div style={{ fontSize: 14, fontWeight: 700, marginBottom: 3 }}>{p.제목}</div>
-          {p.내용 && !p._isSecret && <div style={{ fontSize: 12, color: "#94a3b8", lineHeight: 1.5, marginBottom: 5 }}>{String(p.내용).slice(0, 60)}{p.내용.length > 60 ? "..." : ""}</div>}
-          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-            <span style={{ fontSize: 12, color: "#4b5675" }}>{p.익명여부 ? "익명" : p.작성자} · {p.작성일시?.slice(5, 10)}</span>
-            <div style={{ display: "flex", gap: 8, marginLeft: "auto" }}>
-              <span style={{ fontSize: 12, color: p.likedByMe ? "#38bdf8" : "#4b5675" }}>👍 {p.좋아요수 || 0}</span>
-              <span style={{ fontSize: 12, color: "#4b5675" }}>💬 {p.commentCount || 0}</span>
+      {/* 게시글 목록 */}
+      {loading ? <Spinner /> : (
+        <>
+          {posts.length === 0 && (
+            <div style={{ textAlign:"center", color:"var(--text3)", fontSize:14, padding:"40px 0" }}>
+              게시글이 없습니다.
             </div>
-          </div>
-        </div>
-      ))}
+          )}
+          {posts.map(p => (
+            <div key={p.게시글ID} onClick={() => setSelPost(p)} style={{
+              background: p.상단고정 ? "rgba(251,191,36,.03)" : "var(--card)",
+              border: `1px solid ${p.상단고정 ? "rgba(251,191,36,.4)" : "var(--border)"}`,
+              borderRadius: 10, padding: "10px 12px", marginBottom: 8, cursor: "pointer",
+            }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 5, marginBottom: 5 }}>
+                <span style={{ fontSize: 11, padding: "2px 6px", borderRadius: 3, fontWeight: 700, background: (CAT_COLOR[p.카테고리] || "#94a3b8") + "22", color: CAT_COLOR[p.카테고리] || "#94a3b8", border: `1px solid ${(CAT_COLOR[p.카테고리] || "#94a3b8")}44` }}>{p.카테고리}</span>
+                {p.상단고정 && <span style={{ fontSize: 11, color: "#fbbf24" }}>📌</span>}
+                {p._isSecret && <span style={{ fontSize: 11, color: "#fbbf24" }}>🔒</span>}
+              </div>
+              <div style={{ fontSize: 14, fontWeight: 700, marginBottom: 3 }}>{p.제목}</div>
+              {p.내용 && !p._isSecret && <div style={{ fontSize: 12, color: "var(--text2)", lineHeight: 1.5, marginBottom: 5 }}>{String(p.내용).slice(0, 60)}{p.내용.length > 60 ? "..." : ""}</div>}
+              <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                <span style={{ fontSize: 12, color: "var(--text3)" }}>{p.익명여부 ? "익명" : p.작성자} · {p.작성일시?.slice(5, 10)}</span>
+                <div style={{ display: "flex", gap: 8, marginLeft: "auto" }}>
+                  <span style={{ fontSize: 12, color: p.likedByMe ? "#38bdf8" : "var(--text3)" }}>👍 {p.좋아요수 || 0}</span>
+                  <span style={{ fontSize: 12, color: "var(--text3)" }}>💬 {p.commentCount || 0}</span>
+                </div>
+              </div>
+            </div>
+          ))}
+
+          {/* 무한스크롤 하단 감지 요소 */}
+          <div ref={bottomRef} style={{ height: 20 }} />
+
+          {/* 추가 로딩 인디케이터 */}
+          {loadingMore && (
+            <div style={{ textAlign:"center", padding:"12px 0", color:"var(--text3)", fontSize:13 }}>
+              ⏳ 불러오는 중...
+            </div>
+          )}
+
+          {/* 더 이상 없을 때 */}
+          {!hasMore && posts.length > 0 && (
+            <div style={{ textAlign:"center", padding:"14px 0", color:"var(--text3)", fontSize:12 }}>
+              ─ 전체 {posts.length}개 게시글 ─
+            </div>
+          )}
+        </>
+      )}
     </div>
   );
 }
