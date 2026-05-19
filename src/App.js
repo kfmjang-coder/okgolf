@@ -2091,31 +2091,84 @@ function PostDetail({ post, phone, coaches, adminPw, onBack, showToast }) {
   );
 }
 
+// ── 게시판 전역 메모리 캐시 (컴포넌트 밖 — 앱 살아있는 동안 유지)
+const _boardCache = {
+  data: {},          // { "전체": [...], "공지사항": [...], ... }
+  ts  : {},          // 카테고리별 마지막 로드 시각
+  TTL : 30000,       // 30초
+  get(cat) {
+    if (!this.data[cat]) return null;
+    if (Date.now() - (this.ts[cat] || 0) > this.TTL) return null; // 만료
+    return this.data[cat];
+  },
+  set(cat, posts) {
+    this.data[cat] = posts;
+    this.ts[cat]   = Date.now();
+  },
+  invalidate() { this.data = {}; this.ts = {}; }, // 글쓰기/삭제 후 전체 초기화
+};
+
 function BoardScreen({ coaches, myPhone, adminPw, showToast }) {
   const [cat, setCat]         = useState("전체");
-  const [posts, setPosts]     = useState([]);
-  const [loading, setLoading] = useState(false);
+  const [posts, setPosts]     = useState(() => _boardCache.get("전체") || []);
+  const [loading, setLoading] = useState(!_boardCache.get("전체")); // 캐시 있으면 로딩 스킵
   const [selPost, setSelPost] = useState(null);
   const [writing, setWriting] = useState(false);
 
   const CAT_COLOR = { "공지사항": "#f87171", "자유게시판": "#38bdf8", "스윙분석/질문방": "#fbbf24" };
 
-  const load = useCallback(() => {
+  const load = useCallback((force = false) => {
+    const cached = _boardCache.get(cat);
+    if (cached && !force) {
+      // ★ 캐시 히트 — 즉시 표시 (0ms)
+      setPosts(cached);
+      setLoading(false);
+      return;
+    }
     setLoading(true);
     apiGet({ action: "getPosts", category: cat, phone: myPhone, page: 1 })
-      .then(d => setPosts(d.posts || []))
+      .then(d => {
+        const list = d.posts || [];
+        _boardCache.set(cat, list); // 메모리 캐시 저장
+        setPosts(list);
+      })
       .catch(e => showToast(e.message))
       .finally(() => setLoading(false));
   }, [cat, myPhone]);
 
   useEffect(() => { load(); }, [load]);
 
-  if (selPost) return <PostDetail post={selPost} phone={myPhone} coaches={coaches} adminPw={adminPw} onBack={() => { setSelPost(null); load(); }} showToast={showToast} />;
+  // 카테고리 전환 시 캐시 즉시 표시 + 백그라운드 갱신
+  const switchCat = (newCat) => {
+    setCat(newCat);
+    const cached = _boardCache.get(newCat);
+    if (cached) {
+      setPosts(cached);  // 즉시 표시
+      setLoading(false);
+      // 백그라운드에서 최신 데이터 갱신
+      apiGet({ action: "getPosts", category: newCat, phone: myPhone, page: 1 })
+        .then(d => {
+          const list = d.posts || [];
+          _boardCache.set(newCat, list);
+          setPosts(list);
+        })
+        .catch(() => {});
+    }
+  };
+
+  if (selPost) return <PostDetail post={selPost} phone={myPhone} coaches={coaches} adminPw={adminPw}
+    onBack={() => { setSelPost(null); }} showToast={showToast} />;
   if (writing) return (
     <div style={{ padding: "12px 14px" }}>
       <div style={{ fontSize: 16, fontWeight: 900, marginBottom: 14 }}>✏️ 글쓰기</div>
       <WriteForm coaches={coaches} adminPw={adminPw} onCancel={() => setWriting(false)}
-        onSubmit={async p => { await apiPost({ action: "createPost", ...p }); showToast("✅ 등록 완료"); setWriting(false); load(); }} />
+        onSubmit={async p => {
+          await apiPost({ action: "createPost", ...p });
+          showToast("✅ 등록 완료");
+          _boardCache.invalidate(); // 캐시 무효화
+          setWriting(false);
+          load(true); // 강제 새로고침
+        }} />
     </div>
   );
 
@@ -2127,7 +2180,7 @@ function BoardScreen({ coaches, myPhone, adminPw, showToast }) {
       </div>
       <div style={{ display: "flex", gap: 6, overflowX: "auto", marginBottom: 12 }}>
         {["전체", "공지사항", "자유게시판", "스윙분석/질문방"].map(c => (
-          <button key={c} onClick={() => setCat(c)} style={{
+          <button key={c} onClick={() => switchCat(c)} style={{
             flexShrink: 0, padding: "4px 11px", borderRadius: 20, fontSize: 13, cursor: "pointer",
             fontWeight: cat === c ? 700 : 400, background: cat === c ? "#34d399" : "#1a1e28",
             color: cat === c ? "#000" : "#94a3b8", border: cat === c ? "none" : "1px solid #2d3347",
