@@ -1264,6 +1264,7 @@ function RepeatBookingTab({ phone, repeats, loading, showToast, onCancel }) {
   const [endDate, setEndDate]     = useState("");
   const [myName, setMyName]       = useState("");
   const [myPhone, setMyPhone]     = useState(phone || "");
+  const [cycle, setCycle]         = useState("매주"); // "매주" | "격주"
 
   const DOW_KR     = ["일","월","화","수","목","금","토"];
   const LESSON_TYPES = ["개인30분","개인1시간","그룹1시간","체험30분","주니어45분"];
@@ -1285,10 +1286,10 @@ function RepeatBookingTab({ phone, repeats, loading, showToast, onCancel }) {
 
   // 반복 예약 등록
   const submit = async () => {
-    if (!selCoach || !startDate || !endDate || !myName || !myPhone) {
-      showToast("모든 필수 항목을 입력해주세요."); return;
+    if (!selCoach || !startDate || !myName || !myPhone) {
+      showToast("프로·시작일·이름·연락처는 필수입니다."); return;
     }
-    if (startDate >= endDate) { showToast("종료일은 시작일보다 이후여야 합니다."); return; }
+    if (endDate && startDate >= endDate) { showToast("종료일은 시작일보다 이후여야 합니다."); return; }
     setSubmitting(true);
     try {
       await apiPost({
@@ -1297,9 +1298,11 @@ function RepeatBookingTab({ phone, repeats, loading, showToast, onCancel }) {
         lessonType: selLesson,
         dow: selDow,
         startTime: selTime,
-        startDate, endDate,
+        startDate,
+        endDate: endDate || "",   // 비워두면 수강권 만료일 자동 적용
         name: myName,
         phone: myPhone,
+        cycle,
       });
       showToast("✅ 반복 예약이 등록되었습니다!");
       setShowForm(false);
@@ -1378,9 +1381,31 @@ function RepeatBookingTab({ phone, repeats, loading, showToast, onCancel }) {
             </div>
           </div>
 
+          {/* 주기 선택 */}
+          <div style={{ marginBottom:8 }}>
+            <div style={{ fontSize:9, color:"#4b5675", marginBottom:4 }}>반복 주기 *</div>
+            <div style={{ display:"flex", gap:6 }}>
+              {["매주","격주"].map(c => (
+                <button key={c} onClick={() => setCycle(c)} style={{
+                  flex:1, padding:"8px 0", borderRadius:7, fontSize:12, cursor:"pointer",
+                  fontWeight: cycle===c ? 700 : 400,
+                  background: cycle===c ? "#34d399" : "#1a1e28",
+                  color: cycle===c ? "#000" : "#94a3b8",
+                  border: cycle===c ? "none" : "1px solid #2d3347",
+                }}>{c === "매주" ? "🔁 매주" : "🔂 격주"}</button>
+              ))}
+            </div>
+            {cycle === "격주" && (
+              <div style={{ fontSize:9, color:"#4b5675", marginTop:4, padding:"5px 8px",
+                background:"rgba(56,189,248,.06)", border:"1px solid rgba(56,189,248,.15)", borderRadius:6 }}>
+                💡 격주: 2주마다 한 번 자동 예약
+              </div>
+            )}
+          </div>
+
           {/* 요일 선택 */}
           <div style={{ marginBottom:8 }}>
-            <div style={{ fontSize:9, color:"#4b5675", marginBottom:4 }}>매주 반복 요일 *</div>
+            <div style={{ fontSize:9, color:"#4b5675", marginBottom:4 }}>{cycle} 반복 요일 *</div>
             <div style={{ display:"flex", gap:4 }}>
               {DOW_KR.map((d,i) => (
                 <button key={i} onClick={() => setSelDow(i)} style={{
@@ -1412,17 +1437,22 @@ function RepeatBookingTab({ phone, repeats, loading, showToast, onCancel }) {
           </div>
 
           {/* 시작일 ~ 종료일 */}
-          <div style={{ display:"flex", gap:6, marginBottom:12 }}>
+          <div style={{ display:"flex", gap:6, marginBottom:8 }}>
             <div style={{ flex:1 }}>
               <div style={{ fontSize:9, color:"#4b5675", marginBottom:3 }}>시작일 *</div>
               <input type="date" value={startDate} onChange={e=>setStartDate(e.target.value)}
                 style={{ ...INP, fontSize:11 }} />
             </div>
             <div style={{ flex:1 }}>
-              <div style={{ fontSize:9, color:"#4b5675", marginBottom:3 }}>종료일 *</div>
+              <div style={{ fontSize:9, color:"#4b5675", marginBottom:3 }}>종료일 (선택)</div>
               <input type="date" value={endDate} onChange={e=>setEndDate(e.target.value)}
+                placeholder="수강권 만료일 자동 적용"
                 style={{ ...INP, fontSize:11 }} />
             </div>
+          </div>
+          <div style={{ fontSize:9, color:"#4b5675", marginBottom:12, padding:"5px 8px",
+            background:"rgba(52,211,153,.05)", border:"1px solid rgba(52,211,153,.12)", borderRadius:6 }}>
+            💡 종료일 미입력 시 수강권 만료일까지 자동 적용 · 수강권 소진 시 자동 종료
           </div>
 
           {/* 요약 미리보기 */}
@@ -1433,7 +1463,7 @@ function RepeatBookingTab({ phone, repeats, loading, showToast, onCancel }) {
             }}>
               <div style={{ color:"#34d399", fontWeight:700, marginBottom:4 }}>📋 설정 요약</div>
               <div style={{ color:"#94a3b8", lineHeight:1.8 }}>
-                매주 <b style={{color:"#e2e8f0"}}>{DOW_KR[selDow]}요일 {selTime}</b><br/>
+                <b style={{color:"#38bdf8"}}>{cycle}</b> <b style={{color:"#e2e8f0"}}>{DOW_KR[selDow]}요일 {selTime}</b><br/>
                 {coaches.find(c=>c.id===selCoach)?.name} · {selLesson}<br/>
                 {startDate} ~ {endDate}
               </div>
@@ -1469,7 +1499,7 @@ function RepeatBookingTab({ phone, repeats, loading, showToast, onCancel }) {
               {r["프로명"]} · {r["레슨종류"]}
             </div>
             <div style={{ fontSize:11, color:"#34d399", fontWeight:700, marginBottom:2 }}>
-              매주 {r["요일명"]}요일 {String(r["시작시간"]||"").slice(0,5)}
+              {r["주기"]||"매주"} {r["요일명"]}요일 {String(r["시작시간"]||"").slice(0,5)}
             </div>
             <div style={{ fontSize:10, color:"#4b5675" }}>
               {String(r["시작일"]||"").slice(0,10)} ~ {String(r["종료일"]||"").slice(0,10)}
