@@ -1676,16 +1676,82 @@ function AdminAttendTab({ list, adminPw, showToast, onDone }) {
 
 function AdminProTab({ list, adminPw, showToast, onDone, setCoaches }) {
   const [showForm, setShowForm] = useState(false);
-  const [form, setForm]         = useState({ name: "", title: "대표 프로", intro: "", icon: "🏌️", color: "#34d399" });
+  const [editPro, setEditPro]   = useState(null);  // 수정 중인 프로
+  const [form, setForm]         = useState({
+    name: "", title: "대표 프로", intro: "", icon: "🏌️",
+    color: "#34d399", profileImg: "",
+  });
+  const [imgPreview, setImgPreview] = useState("");
+  const [saving, setSaving]         = useState(false);
 
-  const create = async () => {
-    if (!form.name) { showToast("이름을 입력해주세요."); return; }
-    try {
-      await apiPost({ action: "createCoach", ...form, lessonTypes: JSON.stringify(["개인30분", "개인1시간"]), password: adminPw });
-      showToast("✅ 프로 등록 완료"); setShowForm(false);
-      const updated = await apiGet({ action: "getCoaches" }); setCoaches(updated); onDone();
-    } catch (e) { showToast("❌ " + e.message); }
+  // 폼 초기화
+  const resetForm = () => {
+    setForm({ name: "", title: "대표 프로", intro: "", icon: "🏌️", color: "#34d399", profileImg: "" });
+    setImgPreview(""); setEditPro(null); setShowForm(false);
   };
+
+  // Google Drive URL → 직접 표시 가능한 URL로 변환
+  function convertDriveUrl(url) {
+    if (!url) return "";
+    // https://drive.google.com/file/d/FILE_ID/view 형태
+    const m1 = url.match(/\/file\/d\/([^/]+)/);
+    if (m1) return `https://drive.google.com/uc?export=view&id=${m1[1]}`;
+    // https://drive.google.com/open?id=FILE_ID 형태
+    const m2 = url.match(/[?&]id=([^&]+)/);
+    if (m2) return `https://drive.google.com/uc?export=view&id=${m2[1]}`;
+    // 이미 변환된 URL 또는 일반 URL
+    return url;
+  }
+
+  // URL 입력 시 미리보기 업데이트
+  const handleImgUrl = (url) => {
+    const converted = convertDriveUrl(url.trim());
+    setImgPreview(converted);
+    setForm(p => ({ ...p, profileImg: converted }));
+  };
+
+  // 수정 버튼 클릭
+  const startEdit = (pro) => {
+    setEditPro(pro);
+    setForm({
+      name: pro.name, title: pro.title,
+      intro: pro.intro || "", icon: pro.icon || "🏌️",
+      color: pro.color || "#34d399", profileImg: pro.image || "",
+    });
+    setImgPreview(pro.image || "");
+    setShowForm(true);
+  };
+
+  // 등록 or 수정 저장
+  const save = async () => {
+    if (!form.name) { showToast("이름을 입력해주세요."); return; }
+    setSaving(true);
+    try {
+      if (editPro) {
+        // 수정
+        await apiPost({
+          action: "updateCoach", coachId: editPro.id,
+          ...form, profileImg: form.profileImg,
+          password: adminPw,
+        });
+        showToast("✅ 프로 정보가 수정되었습니다.");
+      } else {
+        // 신규 등록
+        await apiPost({
+          action: "createCoach", ...form,
+          lessonTypes: JSON.stringify(["개인30분", "개인1시간"]),
+          password: adminPw,
+        });
+        showToast("✅ 프로가 등록되었습니다.");
+      }
+      resetForm();
+      const updated = await apiGet({ action: "getCoaches" });
+      setCoaches(updated);
+      onDone();
+    } catch (e) { showToast("❌ " + e.message); }
+    finally { setSaving(false); }
+  };
+
   const deactivate = async (id, name) => {
     if (!window.confirm(`${name}을(를) 비활성화할까요?`)) return;
     try { await apiPost({ action: "deactivateCoach", coachId: id, password: adminPw }); showToast("비활성화 완료"); onDone(); }
@@ -1698,27 +1764,145 @@ function AdminProTab({ list, adminPw, showToast, onDone, setCoaches }) {
 
   return (
     <div>
-      <Btn onClick={() => setShowForm(!showForm)} style={{ marginBottom: 10 }}>{showForm ? "✕ 닫기" : "+ 새 프로 등록"}</Btn>
+      <Btn onClick={() => { if (showForm && !editPro) resetForm(); else { resetForm(); setShowForm(true); } }}
+        style={{ marginBottom: 10 }}>
+        {showForm ? "✕ 닫기" : "+ 새 프로 등록"}
+      </Btn>
+
+      {/* 등록 / 수정 폼 */}
       {showForm && (
-        <div style={{ ...CARD_STYLE, marginBottom: 12 }}>
-          <div style={{ fontSize: 12, fontWeight: 700, marginBottom: 10 }}>새 프로 등록</div>
-          {[{ k: "name", ph: "이름 *" }, { k: "title", ph: "직함" }, { k: "intro", ph: "한 줄 소개" }, { k: "icon", ph: "아이콘 이모지" }].map(f => (
-            <input key={f.k} placeholder={f.ph} value={form[f.k]} onChange={e => setForm(p => ({ ...p, [f.k]: e.target.value }))} style={{ ...INP, marginBottom: 6 }} />
+        <div style={{ ...CARD_STYLE, marginBottom: 14 }}>
+          <div style={{ fontSize: 12, fontWeight: 700, marginBottom: 12, color: "#34d399" }}>
+            {editPro ? `✏️ ${editPro.name} 수정` : "➕ 새 프로 등록"}
+          </div>
+
+          {/* 프로필 사진 — Google Drive URL 입력 */}
+          <div style={{ marginBottom: 14 }}>
+            {/* 미리보기 */}
+            <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 10 }}>
+              <div style={{
+                width: 64, height: 64, borderRadius: "50%", flexShrink: 0,
+                background: "#1f2435", border: `2px solid ${form.color || "#34d399"}`,
+                display: "flex", alignItems: "center", justifyContent: "center",
+                overflow: "hidden", fontSize: 28,
+              }}>
+                {imgPreview
+                  ? <img src={imgPreview} alt="preview"
+                      style={{ width: "100%", height: "100%", objectFit: "cover" }}
+                      onError={() => { setImgPreview(""); showToast("❌ 이미지를 불러올 수 없습니다. URL을 확인해주세요."); }}
+                    />
+                  : form.icon || "🏌️"
+                }
+              </div>
+              <div style={{ flex: 1 }}>
+                <div style={{ fontSize: 11, fontWeight: 700, marginBottom: 4 }}>프로필 사진</div>
+                <div style={{ fontSize: 10, color: "#4b5675", lineHeight: 1.6 }}>
+                  Google Drive에 사진을 올린 후<br/>공유 링크를 아래에 붙여넣으세요
+                </div>
+              </div>
+            </div>
+
+            {/* URL 입력창 */}
+            <input
+              placeholder="Google Drive 공유 URL 붙여넣기"
+              value={form.profileImg}
+              onChange={e => handleImgUrl(e.target.value)}
+              style={{ ...INP, marginBottom: 4, fontSize: 11 }}
+            />
+            {form.profileImg && (
+              <button onClick={() => { setImgPreview(""); setForm(p => ({ ...p, profileImg: "" })); }}
+                style={{ fontSize: 10, color: "#f87171", background: "none", border: "none", cursor: "pointer" }}>
+                ✕ URL 제거
+              </button>
+            )}
+
+            {/* Google Drive 사용법 안내 */}
+            <div style={{
+              marginTop: 8, padding: "8px 10px",
+              background: "rgba(56,189,248,.06)", border: "1px solid rgba(56,189,248,.15)",
+              borderRadius: 8, fontSize: 10, color: "#94a3b8", lineHeight: 1.7,
+            }}>
+              📌 <span style={{ color: "#38bdf8", fontWeight: 700 }}>Google Drive 사용법</span><br/>
+              1. drive.google.com 접속<br/>
+              2. 사진 파일 우클릭 → 공유<br/>
+              3. <span style={{ color: "#fbbf24" }}>링크가 있는 모든 사용자</span> 로 변경<br/>
+              4. 링크 복사 → 위 입력창에 붙여넣기
+            </div>
+          </div>
+
+          {/* 텍스트 입력 */}
+          {[
+            { k: "name",  ph: "이름 *",       type: "text" },
+            { k: "title", ph: "직함",          type: "text" },
+            { k: "intro", ph: "한 줄 소개",    type: "text" },
+            { k: "icon",  ph: "아이콘 이모지", type: "text" },
+          ].map(f => (
+            <input key={f.k} placeholder={f.ph} value={form[f.k]}
+              onChange={e => setForm(p => ({ ...p, [f.k]: e.target.value }))}
+              style={{ ...INP, marginBottom: 6 }} />
           ))}
-          <Btn onClick={create} style={{ marginTop: 4 }}>등록</Btn>
+
+          {/* 테마 색상 */}
+          <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 10 }}>
+            <div style={{ fontSize: 11, color: "#94a3b8" }}>테마 색상</div>
+            <input type="color" value={form.color}
+              onChange={e => setForm(p => ({ ...p, color: e.target.value }))}
+              style={{ width: 40, height: 30, borderRadius: 6, border: "none", cursor: "pointer", background: "none" }} />
+            <div style={{ fontSize: 11, color: form.color, fontWeight: 700 }}>{form.color}</div>
+          </div>
+
+          <div style={{ display: "flex", gap: 8 }}>
+            <Btn variant="secondary" onClick={resetForm} style={{ flex: 1 }}>취소</Btn>
+            <Btn onClick={save} disabled={saving} style={{ flex: 2 }}>
+              {saving ? "저장 중..." : editPro ? "✅ 수정 완료" : "✅ 등록"}
+            </Btn>
+          </div>
         </div>
       )}
+
+      {/* 프로 목록 */}
       {list.map(p => (
-        <div key={p.id} style={{ ...CARD_STYLE, display: "flex", alignItems: "center", gap: 10, marginBottom: 8 }}>
-          <span style={{ fontSize: 22 }}>{p.icon}</span>
+        <div key={p.id} style={{
+          ...CARD_STYLE, display: "flex", alignItems: "center",
+          gap: 10, marginBottom: 8,
+          borderColor: p.status === "active" ? "#2d3347" : "rgba(248,113,113,.3)",
+        }}>
+          {/* 프로필 사진 또는 아이콘 */}
+          <div style={{
+            width: 44, height: 44, borderRadius: "50%", flexShrink: 0,
+            background: "#1f2435", border: `2px solid ${p.color || "#34d399"}`,
+            display: "flex", alignItems: "center", justifyContent: "center",
+            overflow: "hidden", fontSize: 20,
+          }}>
+            {p.image
+              ? <img src={p.image} alt={p.name} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+              : p.icon || "🏌️"
+            }
+          </div>
           <div style={{ flex: 1 }}>
             <div style={{ fontSize: 12, fontWeight: 700 }}>{p.name}</div>
-            <div style={{ fontSize: 10, color: p.status === "active" ? "#94a3b8" : "#f87171" }}>{p.title} · {p.status === "active" ? "활성" : "비활성"}</div>
+            <div style={{ fontSize: 10, color: p.status === "active" ? "#94a3b8" : "#f87171" }}>
+              {p.title} · {p.status === "active" ? "활성" : "비활성"}
+            </div>
           </div>
-          {p.status === "active"
-            ? <button onClick={() => deactivate(p.id, p.name)} style={{ padding: "3px 8px", borderRadius: 5, border: "1px solid rgba(251,191,36,.3)", background: "rgba(251,191,36,.1)", color: "#fbbf24", fontSize: 9, cursor: "pointer" }}>비활성</button>
-            : <button onClick={() => reactivate(p.id)} style={{ padding: "3px 8px", borderRadius: 5, border: "1px solid rgba(52,211,153,.3)", background: "rgba(52,211,153,.1)", color: "#34d399", fontSize: 9, cursor: "pointer" }}>복구</button>
-          }
+          <div style={{ display: "flex", gap: 4 }}>
+            {/* 수정 버튼 */}
+            <button onClick={() => startEdit(p)} style={{
+              padding: "3px 8px", borderRadius: 5, fontSize: 9, cursor: "pointer",
+              border: "1px solid rgba(56,189,248,.3)", background: "rgba(56,189,248,.1)", color: "#38bdf8",
+            }}>수정</button>
+            {/* 활성/비활성 버튼 */}
+            {p.status === "active"
+              ? <button onClick={() => deactivate(p.id, p.name)} style={{
+                  padding: "3px 8px", borderRadius: 5, fontSize: 9, cursor: "pointer",
+                  border: "1px solid rgba(251,191,36,.3)", background: "rgba(251,191,36,.1)", color: "#fbbf24",
+                }}>비활성</button>
+              : <button onClick={() => reactivate(p.id)} style={{
+                  padding: "3px 8px", borderRadius: 5, fontSize: 9, cursor: "pointer",
+                  border: "1px solid rgba(52,211,153,.3)", background: "rgba(52,211,153,.1)", color: "#34d399",
+                }}>복구</button>
+            }
+          </div>
         </div>
       ))}
     </div>
