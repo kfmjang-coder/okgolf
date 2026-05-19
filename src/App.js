@@ -314,7 +314,38 @@ function BookScreen({ coaches, selPro, setSelPro, setDetailPro, showToast, setTa
   const [bPeople, setBPeople]       = useState(1);
   const [submitting, setSubmitting] = useState(false);
 
-  const LESSON_TYPES = ["개인30분", "개인1시간", "그룹1시간", "체험30분", "주니어45분"];
+  const [allLessons, setAllLessons] = useState([]);  // DB 레슨 종류
+
+  // 컴포넌트 마운트 시 레슨 종류 로드
+  useEffect(() => {
+    apiGet({ action:"getLessons" })
+      .then(data => {
+        if (data && data.length > 0) {
+          setAllLessons(data);
+          setLessonType(data[0]["레슨명"]); // 첫 번째 레슨을 기본값으로
+        }
+      })
+      .catch(() => {
+        // 로드 실패 시 하드코딩 폴백
+        const fallback = [
+          { "레슨ID":"F1","레슨명":"개인30분","소요시간(분)":30,"색상":"#34d399" },
+          { "레슨ID":"F2","레슨명":"개인1시간","소요시간(분)":60,"색상":"#38bdf8" },
+          { "레슨ID":"F3","레슨명":"그룹1시간","소요시간(분)":60,"색상":"#a78bfa" },
+          { "레슨ID":"F4","레슨명":"체험30분","소요시간(분)":30,"색상":"#fbbf24"  },
+          { "레슨ID":"F5","레슨명":"주니어45분","소요시간(분)":45,"색상":"#f87171"},
+        ];
+        setAllLessons(fallback);
+      });
+  }, []);
+
+  // 선택된 프로가 담당하는 레슨 종류만 필터
+  const LESSON_TYPES_RAW = selPro
+    ? allLessons.filter(l => {
+        const proTypes = selPro.lessonTypes || [];
+        return proTypes.length === 0 || proTypes.includes(l["레슨명"]);
+      })
+    : allLessons;
+
   const DOW_KR = ["일", "월", "화", "수", "목", "금", "토"];
   const dateList = Array.from({ length: 14 }, (_, i) => {
     const d = new Date(); d.setDate(d.getDate() + i);
@@ -381,15 +412,23 @@ function BookScreen({ coaches, selPro, setSelPro, setDetailPro, showToast, setTa
           ))}
           <div style={{ ...LBL, marginTop: 8 }}>② 레슨 종류</div>
           <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginBottom: 16 }}>
-            {LESSON_TYPES.map(t => (
-              <button key={t} onClick={() => setLessonType(t)} style={{
-                padding: "6px 14px", borderRadius: 20, fontSize: 11, cursor: "pointer",
-                fontWeight: lessonType === t ? 700 : 400,
-                background: lessonType === t ? "#34d399" : "#1a1e28",
-                color: lessonType === t ? "#000" : "#94a3b8",
-                border: lessonType === t ? "none" : "1px solid #2d3347",
-              }}>{t}</button>
-            ))}
+            {(LESSON_TYPES_RAW.length > 0 ? LESSON_TYPES_RAW : allLessons).map(l => {
+              const name  = l["레슨명"];
+              const color = l["색상"] || "#34d399";
+              const isSel = lessonType === name;
+              return (
+                <button key={l["레슨ID"]} onClick={() => setLessonType(name)} style={{
+                  padding: "6px 14px", borderRadius: 20, fontSize: 11, cursor: "pointer",
+                  fontWeight: isSel ? 700 : 400,
+                  background: isSel ? color : "#1a1e28",
+                  color: isSel ? "#000" : "#94a3b8",
+                  border: isSel ? "none" : `1px solid ${color}44`,
+                }}>
+                  {name}
+                  {l["소요시간(분)"] && <span style={{ fontSize:9, opacity:.7, marginLeft:4 }}>{l["소요시간(분)"]}분</span>}
+                </button>
+              );
+            })}
           </div>
           <Btn onClick={() => setStep(2)} disabled={!selPro}>다음 → 날짜·시간 선택</Btn>
         </div>
@@ -2619,6 +2658,7 @@ function AdminScreen({ coaches, setCoaches, showToast, onLogin }) {
         { id:"attend",   label:"✅ 출석"     },
         { id:"students", label:"👥 수강생"   },
         { id:"pro",      label:"🏌️ 프로"    },
+        { id:"lessons",  label:"📚 레슨종류" },
         { id:"block",    label:"🚫 차단"     },
         { id:"report",   label:"🚨 신고"     },
       ]
@@ -2627,6 +2667,7 @@ function AdminScreen({ coaches, setCoaches, showToast, onLogin }) {
         { id:"attend",   label:"✅ 출석" },
         { id:"students", label:"👥 수강생"},
         { id:"pro",      label:"🏌️ 프로"},
+        { id:"lessons",  label:"📚 레슨" },
         { id:"block",    label:"🚫 차단" },
         { id:"report",   label:"🚨 신고" },
       ];
@@ -2664,6 +2705,7 @@ function AdminScreen({ coaches, setCoaches, showToast, onLogin }) {
       {adminTab === "pro"      && <AdminProTab list={proList} adminPw={adminPw} showToast={showToast} onDone={() => loadData(adminPw, "pro")} setCoaches={setCoaches} />}
       {adminTab === "report"   && <AdminReportTab list={reports} adminPw={adminPw} showToast={showToast} onDone={() => loadData(adminPw, "report")} />}
       {adminTab === "students" && <AdminStudentTab adminPw={adminPw} showToast={showToast} />}
+      {adminTab === "lessons"  && <AdminLessonTab adminPw={adminPw} showToast={showToast} />}
       {adminTab === "block"    && <AdminBlockTab coaches={coaches} adminPw={adminPw} showToast={showToast} />}
     </div>
   );
@@ -3313,6 +3355,273 @@ function AdminStudentTab({ adminPw, showToast }) {
 //  🚫 차단 관리 탭
 //  특정 날짜·시간 또는 매주 요일·시간 반복 차단
 // ─────────────────────────────────────────────
+// ─────────────────────────────────────────────
+//  📚 레슨 종류 관리 탭
+// ─────────────────────────────────────────────
+function AdminLessonTab({ adminPw, showToast }) {
+  const [lessons, setLessons]   = useState([]);
+  const [loading, setLoading]   = useState(true);
+  const [editLesson, setEditLesson] = useState(null); // null=신규, obj=수정
+  const [showForm, setShowForm] = useState(false);
+
+  // 폼 상태
+  const [fName, setFName]       = useState("");
+  const [fDur, setFDur]         = useState("60");
+  const [fPrice, setFPrice]     = useState("");
+  const [fColor, setFColor]     = useState("#34d399");
+  const [fDesc, setFDesc]       = useState("");
+  const [fOrder, setFOrder]     = useState("99");
+  const [submitting, setSubmitting] = useState(false);
+
+  const COLORS = ["#34d399","#38bdf8","#a78bfa","#fbbf24","#f87171","#fb923c","#e879f9"];
+  const DURATIONS = [
+    { val:"20", label:"20분" }, { val:"30", label:"30분" },
+    { val:"40", label:"40분" }, { val:"45", label:"45분" },
+    { val:"60", label:"1시간"}, { val:"80", label:"1시간20분"},
+    { val:"90", label:"1시간30분"},
+  ];
+
+  const load = async () => {
+    setLoading(true);
+    try {
+      const data = await apiGet({ action:"getLessons" });
+      setLessons(data || []);
+    } catch(e) { showToast("❌ " + e.message); }
+    finally { setLoading(false); }
+  };
+  useEffect(() => { load(); }, []);
+
+  const openNew = () => {
+    setEditLesson(null);
+    setFName(""); setFDur("60"); setFPrice(""); setFColor("#34d399");
+    setFDesc(""); setFOrder(String((lessons.length + 1) * 10));
+    setShowForm(true);
+  };
+
+  const openEdit = (l) => {
+    setEditLesson(l);
+    setFName(l["레슨명"]);
+    setFDur(String(l["소요시간(분)"] || 60));
+    setFPrice(String(l["가격"] || ""));
+    setFColor(l["색상"] || "#34d399");
+    setFDesc(l["설명"] || "");
+    setFOrder(String(l["정렬순서"] || 99));
+    setShowForm(true);
+  };
+
+  const save = async () => {
+    if (!fName.trim()) { showToast("레슨명을 입력해주세요."); return; }
+    if (!fDur)         { showToast("소요시간을 선택해주세요."); return; }
+    setSubmitting(true);
+    try {
+      if (editLesson) {
+        await apiPost({
+          action:"updateLesson", lessonId:editLesson["레슨ID"],
+          name:fName, duration:fDur, price:fPrice,
+          color:fColor, desc:fDesc, sortOrder:fOrder,
+          password:adminPw,
+        });
+        showToast("✅ 레슨 종류 수정 완료");
+      } else {
+        await apiPost({
+          action:"createLesson",
+          name:fName, duration:fDur, price:fPrice,
+          color:fColor, desc:fDesc, sortOrder:fOrder,
+          password:adminPw,
+        });
+        showToast("✅ 레슨 종류 추가 완료");
+      }
+      setShowForm(false);
+      load();
+    } catch(e) { showToast("❌ " + e.message); }
+    finally { setSubmitting(false); }
+  };
+
+  const del = async (lessonId, name) => {
+    if (!window.confirm(`"${name}" 레슨 종류를 삭제할까요?
+기존 예약 데이터에는 영향 없습니다.`)) return;
+    try {
+      await apiPost({ action:"deleteLesson", lessonId, password:adminPw });
+      showToast("✅ 삭제 완료");
+      load();
+    } catch(e) { showToast("❌ " + e.message); }
+  };
+
+  return (
+    <div>
+      {/* 헤더 */}
+      <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:12 }}>
+        <div style={{ fontSize:12, color:"#4b5675" }}>총 {lessons.length}개 레슨 종류</div>
+        <button onClick={openNew} style={{
+          padding:"6px 14px", borderRadius:8, fontSize:11, fontWeight:700, cursor:"pointer",
+          background:"rgba(52,211,153,.15)", border:"1px solid rgba(52,211,153,.3)", color:"#34d399",
+        }}>+ 레슨 추가</button>
+      </div>
+
+      {/* 등록/수정 폼 */}
+      {showForm && (
+        <div style={{
+          background:"#181c25", border:"1px solid rgba(52,211,153,.2)",
+          borderRadius:12, padding:14, marginBottom:14,
+        }}>
+          <div style={{ fontSize:12, fontWeight:700, color:"#34d399", marginBottom:12 }}>
+            {editLesson ? `✏️ "${editLesson["레슨명"]}" 수정` : "➕ 새 레슨 종류 추가"}
+          </div>
+
+          {/* 레슨명 */}
+          <div style={{ marginBottom:10 }}>
+            <div style={{ fontSize:9, color:"#4b5675", marginBottom:3 }}>레슨명 *</div>
+            <input value={fName} onChange={e=>setFName(e.target.value)}
+              placeholder="예: 개인30분, 그룹레슨, VIP 코칭..."
+              style={{ ...INP, fontSize:12 }} />
+          </div>
+
+          {/* 소요시간 */}
+          <div style={{ marginBottom:10 }}>
+            <div style={{ fontSize:9, color:"#4b5675", marginBottom:4 }}>소요시간 *</div>
+            <div style={{ display:"flex", flexWrap:"wrap", gap:4 }}>
+              {DURATIONS.map(d => (
+                <button key={d.val} onClick={() => setFDur(d.val)} style={{
+                  padding:"5px 10px", borderRadius:6, fontSize:11, cursor:"pointer",
+                  fontWeight: fDur===d.val ? 700 : 400,
+                  background: fDur===d.val ? "#34d399" : "#1a1e28",
+                  color: fDur===d.val ? "#000" : "#94a3b8",
+                  border: fDur===d.val ? "none" : "1px solid #2d3347",
+                }}>{d.label}</button>
+              ))}
+              {/* 직접 입력 */}
+              <div style={{ display:"flex", alignItems:"center", gap:4 }}>
+                <input value={!DURATIONS.find(d=>d.val===fDur) ? fDur : ""}
+                  onChange={e=>setFDur(e.target.value)}
+                  placeholder="직접입력(분)"
+                  style={{ ...INP, width:80, fontSize:10 }} />
+              </div>
+            </div>
+          </div>
+
+          {/* 가격 */}
+          <div style={{ marginBottom:10 }}>
+            <div style={{ fontSize:9, color:"#4b5675", marginBottom:3 }}>가격 (원, 선택)</div>
+            <input value={fPrice} onChange={e=>setFPrice(e.target.value)}
+              placeholder="예: 30000"
+              type="number"
+              style={{ ...INP, fontSize:12 }} />
+          </div>
+
+          {/* 설명 */}
+          <div style={{ marginBottom:10 }}>
+            <div style={{ fontSize:9, color:"#4b5675", marginBottom:3 }}>설명 (선택)</div>
+            <input value={fDesc} onChange={e=>setFDesc(e.target.value)}
+              placeholder="예: 1:1 개인 레슨 30분"
+              style={{ ...INP, fontSize:12 }} />
+          </div>
+
+          {/* 색상 */}
+          <div style={{ marginBottom:10 }}>
+            <div style={{ fontSize:9, color:"#4b5675", marginBottom:4 }}>색상 태그</div>
+            <div style={{ display:"flex", gap:6, alignItems:"center" }}>
+              {COLORS.map(c => (
+                <div key={c} onClick={() => setFColor(c)} style={{
+                  width:24, height:24, borderRadius:"50%", background:c, cursor:"pointer",
+                  border: fColor===c ? "3px solid #fff" : "2px solid transparent",
+                  transition:"transform .1s",
+                  transform: fColor===c ? "scale(1.2)" : "scale(1)",
+                }}/>
+              ))}
+              <input type="color" value={fColor} onChange={e=>setFColor(e.target.value)}
+                style={{ width:28, height:28, borderRadius:4, border:"none", cursor:"pointer", background:"none" }} />
+              <span style={{ fontSize:10, color:"#4b5675" }}>{fColor}</span>
+            </div>
+          </div>
+
+          {/* 정렬순서 */}
+          <div style={{ marginBottom:14 }}>
+            <div style={{ fontSize:9, color:"#4b5675", marginBottom:3 }}>정렬 순서</div>
+            <input value={fOrder} onChange={e=>setFOrder(e.target.value)}
+              type="number" placeholder="숫자가 작을수록 앞에 표시"
+              style={{ ...INP, fontSize:12 }} />
+          </div>
+
+          {/* 미리보기 */}
+          <div style={{
+            display:"flex", alignItems:"center", gap:10, padding:"8px 12px",
+            background:fColor+"15", border:`1px solid ${fColor}44`,
+            borderRadius:8, marginBottom:12,
+          }}>
+            <div style={{ width:10, height:10, borderRadius:"50%", background:fColor, flexShrink:0 }}/>
+            <div>
+              <div style={{ fontSize:12, fontWeight:700, color:fColor }}>{fName||"레슨명"}</div>
+              <div style={{ fontSize:10, color:"#94a3b8" }}>
+                {DURATIONS.find(d=>d.val===fDur)?.label || fDur+"분"}
+                {fPrice ? ` · ${Number(fPrice).toLocaleString()}원` : ""}
+              </div>
+            </div>
+          </div>
+
+          <div style={{ display:"flex", gap:8 }}>
+            <button onClick={() => setShowForm(false)} style={{
+              flex:1, padding:"8px 0", borderRadius:8, fontSize:11, cursor:"pointer",
+              background:"#1a1e28", border:"1px solid #2d3347", color:"#94a3b8",
+            }}>취소</button>
+            <button onClick={save} disabled={submitting} style={{
+              flex:2, padding:"8px 0", borderRadius:8, fontSize:12, fontWeight:700,
+              cursor: submitting ? "not-allowed" : "pointer",
+              background:"#34d399", border:"none", color:"#000",
+              opacity: submitting ? .6 : 1,
+              fontFamily:"'Noto Sans KR', sans-serif",
+            }}>{submitting ? "저장 중..." : editLesson ? "✅ 수정 완료" : "✅ 추가"}</button>
+          </div>
+        </div>
+      )}
+
+      {/* 레슨 목록 */}
+      {loading ? <Spinner /> : lessons.length === 0 ? (
+        <div style={{ textAlign:"center", color:"#4b5675", fontSize:12, padding:"24px 0" }}>
+          레슨 종류가 없습니다.<br/>
+          <span style={{ fontSize:11, color:"#2d3347" }}>위 버튼으로 추가해보세요.</span>
+        </div>
+      ) : lessons.map(l => (
+        <div key={l["레슨ID"]} style={{
+          background:"#181c25", borderRadius:10, padding:"11px 13px", marginBottom:8,
+          border:`1px solid ${l["색상"]||"#34d399"}33`,
+          borderLeft:`3px solid ${l["색상"]||"#34d399"}`,
+          display:"flex", alignItems:"center", gap:10,
+        }}>
+          <div style={{
+            width:10, height:10, borderRadius:"50%",
+            background:l["색상"]||"#34d399", flexShrink:0,
+          }}/>
+          <div style={{ flex:1 }}>
+            <div style={{ display:"flex", alignItems:"center", gap:6, marginBottom:2 }}>
+              <span style={{ fontSize:12, fontWeight:700 }}>{l["레슨명"]}</span>
+              <span style={{
+                fontSize:9, padding:"1px 6px", borderRadius:3,
+                background:(l["색상"]||"#34d399")+"22", color:l["색상"]||"#34d399", fontWeight:700,
+              }}>
+                {l["소요시간(분)"]}분
+              </span>
+            </div>
+            <div style={{ fontSize:10, color:"#4b5675" }}>
+              {l["가격"] ? Number(l["가격"]).toLocaleString()+"원" : "가격 미설정"}
+              {l["설명"] ? ` · ${l["설명"]}` : ""}
+            </div>
+          </div>
+          <div style={{ display:"flex", gap:4 }}>
+            <button onClick={() => openEdit(l)} style={{
+              padding:"4px 8px", borderRadius:5, fontSize:9, cursor:"pointer",
+              border:"1px solid rgba(56,189,248,.3)", background:"rgba(56,189,248,.1)", color:"#38bdf8",
+            }}>수정</button>
+            <button onClick={() => del(l["레슨ID"], l["레슨명"])} style={{
+              padding:"4px 8px", borderRadius:5, fontSize:9, cursor:"pointer",
+              border:"1px solid rgba(248,113,113,.3)", background:"rgba(248,113,113,.1)", color:"#f87171",
+            }}>삭제</button>
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
 function AdminBlockTab({ coaches, adminPw, showToast }) {
   const DOW_KR = ["일","월","화","수","목","금","토"];
 
