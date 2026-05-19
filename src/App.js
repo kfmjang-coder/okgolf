@@ -1288,9 +1288,8 @@ function RepeatBookingTab({ phone, repeats, loading, showToast, onCancel, onRefr
 
   const DOW_KR     = ["일","월","화","수","목","금","토"];
   const LESSON_TYPES = ["개인30분","개인1시간","그룹1시간","체험30분","주니어45분"];
-  const TIMES      = ["09:00","09:30","10:00","10:30","11:00","11:30","12:00","12:30",
-                      "13:00","13:30","14:00","14:30","15:00","15:30","16:00","16:30",
-                      "17:00","17:30","18:00","18:30","19:00","19:30","20:00","20:30","21:00","21:30"];
+  // 20분 단위 시간 목록 (06:00 ~ 21:40)
+  const TIMES = ["06:00","06:20","06:40","07:00","07:20","07:40","08:00","08:20","08:40","09:00","09:20","09:40","10:00","10:20","10:40","11:00","11:20","11:40","12:00","12:20","12:40","13:00","13:20","13:40","14:00","14:20","14:40","15:00","15:20","15:40","16:00","16:20","16:40","17:00","17:20","17:40","18:00","18:20","18:40","19:00","19:20","19:40","20:00","20:20","20:40","21:00","21:20","21:40"];
 
   // 폼 열 때 프로 목록 로드
   const openForm = async () => {
@@ -2084,12 +2083,12 @@ function tl_calcEnd(start, lessonType) {
 
 // PC 타임라인 컴포넌트
 function AdminTimeline({ coaches, adminPw, showToast }) {
-  const SLOT_H  = 48;
+  const SLOT_H  = 32;  // 20분 단위 슬롯 높이
   const COL_W   = 200;
   const TIME_W  = 56;
   const START_H = 9;
   const END_H   = 22;
-  const TOTAL   = (END_H - START_H) * 2;
+  const TOTAL   = (END_H - START_H) * 3;  // 20분 단위: 시간당 3슬롯
 
   const [selDate, setSelDate]   = useState(tl_todayStr());
   const [bookings, setBookings] = useState([]);
@@ -2130,7 +2129,7 @@ function AdminTimeline({ coaches, adminPw, showToast }) {
       const now = new Date();
       const h = now.getHours(), m = now.getMinutes();
       if (h < START_H || h >= END_H) { setNowTop(null); return; }
-      setNowTop((h - START_H) * 2 * SLOT_H + (m / 30) * SLOT_H);
+      setNowTop(((h - START_H) * 60 + m) / 20 * SLOT_H);
     };
     calc();
     const t = setInterval(calc, 60000);
@@ -2188,12 +2187,12 @@ function AdminTimeline({ coaches, adminPw, showToast }) {
   // 슬롯 높이 계산
   const timeToTop = (hhmm) => {
     const [h,m] = hhmm.split(":").map(Number);
-    return (h - START_H) * 2 * SLOT_H + (m === 30 ? SLOT_H : 0);
+    return ((h - START_H) * 60 + m) / 20 * SLOT_H;
   };
   const durSlots = (lessonType) => {
-    if ((lessonType||"").includes("1시간")) return 2;
-    if ((lessonType||"").includes("45"))   return 1.5;
-    return 1;
+    if ((lessonType||"").includes("1시간")) return 3;   // 60분 = 3슬롯
+    if ((lessonType||"").includes("45"))   return 2.25; // 45분 = 2.25슬롯
+    return 1.5; // 30분 = 1.5슬롯
   };
 
   const statusColor = { "예약":"#34d399","완료":"#38bdf8","노쇼":"#f87171","취소":"#4b5675" };
@@ -2239,14 +2238,16 @@ function AdminTimeline({ coaches, adminPw, showToast }) {
             <div style={{ height:48, borderBottom:"2px solid #1f2435" }} />
             {/* 시간 눈금 */}
             {Array.from({length:TOTAL}, (_,i) => {
-              const h = START_H + Math.floor(i/2);
-              const m = i%2===0 ? "00" : "30";
+              const totalMin2 = START_H * 60 + i * 20;
+              const h = Math.floor(totalMin2 / 60);
+              const m = totalMin2 % 60;
+              const isHour = m === 0;
               return (
                 <div key={i} style={{
-                  height:SLOT_H, borderBottom:`1px solid ${m==="00"?"#1f2435":"#141720"}`,
-                  display:"flex", alignItems:"flex-start", padding:"3px 6px 0",
+                  height:SLOT_H, borderBottom:`1px solid ${isHour?"#1f2435":"#0f111a"}`,
+                  display:"flex", alignItems:"flex-start", padding:"2px 6px 0",
                   fontFamily:"monospace", fontSize:9,
-                  color: m==="00" ? "#4b5675" : "transparent",
+                  color: isHour ? "#4b5675" : "transparent",
                 }}>{`${tl_pad(h)}:00`}</div>
               );
             })}
@@ -2285,9 +2286,10 @@ function AdminTimeline({ coaches, adminPw, showToast }) {
                 {/* 슬롯 셀 */}
                 <div style={{ position:"relative" }}>
                   {Array.from({length:TOTAL}, (_,i) => {
-                    const h = START_H + Math.floor(i/2);
-                    const m = i%2===0 ? "00" : "30";
-                    const time = `${tl_pad(h)}:${m}`;
+                    const totalMin = START_H * 60 + i * 20;
+                    const h = Math.floor(totalMin / 60);
+                    const m = totalMin % 60;
+                    const time = `${tl_pad(h)}:${tl_pad(m)}`;
                     return (
                       <div key={time} onClick={() => onSlotClick(coach, time, null)}
                         style={{
@@ -2740,13 +2742,14 @@ function AdminProTab({ list, adminPw, showToast, onDone, setCoaches }) {
   const [form, setForm]         = useState({
     name: "", title: "대표 프로", intro: "", icon: "🏌️",
     color: "#34d399", profileImg: "",
+    startHour: 9, endHour: 22,
   });
   const [imgPreview, setImgPreview] = useState("");
   const [saving, setSaving]         = useState(false);
 
   // 폼 초기화
   const resetForm = () => {
-    setForm({ name: "", title: "대표 프로", intro: "", icon: "🏌️", color: "#34d399", profileImg: "" });
+    setForm({ name: "", title: "대표 프로", intro: "", icon: "🏌️", color: "#34d399", profileImg: "", startHour: 9, endHour: 22 });
     setImgPreview(""); setEditPro(null); setShowForm(false);
   };
 
@@ -2777,6 +2780,8 @@ function AdminProTab({ list, adminPw, showToast, onDone, setCoaches }) {
       name: pro.name, title: pro.title,
       intro: pro.intro || "", icon: pro.icon || "🏌️",
       color: pro.color || "#34d399", profileImg: pro.image || "",
+      startHour: pro.startHour || 9,
+      endHour:   pro.endHour   || 22,
     });
     setImgPreview(pro.image || "");
     setShowForm(true);
@@ -2792,6 +2797,8 @@ function AdminProTab({ list, adminPw, showToast, onDone, setCoaches }) {
         await apiPost({
           action: "updateCoach", coachId: editPro.id,
           ...form, profileImg: form.profileImg,
+          startHour: form.startHour,
+          endHour:   form.endHour,
           password: adminPw,
         });
         showToast("✅ 프로 정보가 수정되었습니다.");
@@ -2901,6 +2908,39 @@ function AdminProTab({ list, adminPw, showToast, onDone, setCoaches }) {
               onChange={e => setForm(p => ({ ...p, [f.k]: e.target.value }))}
               style={{ ...INP, marginBottom: 6 }} />
           ))}
+
+          {/* 레슨 운영 시간 */}
+          <div style={{ marginBottom: 12 }}>
+            <div style={{ fontSize: 10, fontWeight: 700, color: "#4b5675", marginBottom: 8, letterSpacing:.5 }}>
+              ⏰ 레슨 운영 시간
+            </div>
+            <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+              <div style={{ flex: 1 }}>
+                <div style={{ fontSize: 9, color: "#4b5675", marginBottom: 3 }}>시작</div>
+                <select value={form.startHour}
+                  onChange={e => setForm(p => ({ ...p, startHour: Number(e.target.value) }))}
+                  style={{ ...INP, fontSize: 12 }}>
+                  {Array.from({ length: 16 }, (_, i) => i + 6).map(h => (
+                    <option key={h} value={h}>{String(h).padStart(2,"0")}:00</option>
+                  ))}
+                </select>
+              </div>
+              <div style={{ color: "#4b5675", paddingTop: 14 }}>~</div>
+              <div style={{ flex: 1 }}>
+                <div style={{ fontSize: 9, color: "#4b5675", marginBottom: 3 }}>종료</div>
+                <select value={form.endHour}
+                  onChange={e => setForm(p => ({ ...p, endHour: Number(e.target.value) }))}
+                  style={{ ...INP, fontSize: 12 }}>
+                  {Array.from({ length: 16 }, (_, i) => i + 8).map(h => (
+                    <option key={h} value={h}>{String(h).padStart(2,"0")}:00</option>
+                  ))}
+                </select>
+              </div>
+            </div>
+            <div style={{ fontSize: 9, color: "#4b5675", marginTop: 4 }}>
+              20분 단위 슬롯 생성 기준 시간
+            </div>
+          </div>
 
           {/* 테마 색상 */}
           <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 10 }}>
