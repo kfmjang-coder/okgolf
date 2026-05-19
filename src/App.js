@@ -2877,7 +2877,9 @@ function AdminProTab({ list, adminPw, showToast, onDone, setCoaches }) {
           ...form, profileImg: form.profileImg,
           startHour: form.startHour,
           endHour:   form.endHour,
-          lessonTypes: JSON.stringify(form.lessonTypes),
+          lessonTypes: JSON.stringify(
+            form.lessonTypes.filter(n => allLessons.find(l => l["레슨명"] === n))
+          ),
           password: adminPw,
         });
         showToast("✅ 프로 정보가 수정되었습니다.");
@@ -3031,9 +3033,12 @@ function AdminProTab({ list, adminPw, showToast, onDone, setCoaches }) {
               📚 담당 레슨 종류 <span style={{ color:"#2d3347", fontWeight:400 }}>(미선택 시 전체 담당)</span>
             </div>
             {allLessons.length === 0 ? (
-              <div style={{ fontSize:10, color:"#4b5675" }}>레슨 종류를 먼저 등록해주세요.</div>
+              <div style={{ fontSize:10, color:"#f87171", padding:"6px 8px", background:"rgba(248,113,113,.08)", borderRadius:6 }}>
+                ⚠️ 레슨 종류를 먼저 📚 레슨종류 탭에서 등록해주세요.
+              </div>
             ) : (
               <div style={{ display:"flex", flexWrap:"wrap", gap:5 }}>
+                {/* DB에 있는 레슨만 표시 */}
                 {allLessons.map(l => {
                   const isSel = form.lessonTypes.includes(l["레슨명"]);
                   const color = l["색상"] || "#34d399";
@@ -3053,11 +3058,39 @@ function AdminProTab({ list, adminPw, showToast, onDone, setCoaches }) {
                     </button>
                   );
                 })}
+                {/* DB에 없는 레슨명 (구버전 데이터) — 회색 경고 표시 */}
+                {form.lessonTypes
+                  .filter(name => !allLessons.find(l => l["레슨명"] === name))
+                  .map(name => (
+                    <button key={name} type="button"
+                      onClick={() => toggleLesson(name)}
+                      title="DB에 없는 레슨 종류 — 저장 시 자동 제거됩니다"
+                      style={{
+                        padding:"5px 10px", borderRadius:6, fontSize:11, cursor:"pointer",
+                        background:"rgba(248,113,113,.1)",
+                        color:"#f87171",
+                        border:"1px solid rgba(248,113,113,.3)",
+                        textDecoration:"line-through",
+                        opacity:.7,
+                      }}>
+                      ✕ {name} <span style={{ fontSize:8 }}>미등록</span>
+                    </button>
+                  ))
+                }
               </div>
             )}
             {form.lessonTypes.length > 0 && (
-              <div style={{ fontSize:9, color:"#34d399", marginTop:5 }}>
-                ✓ {form.lessonTypes.join(" · ")} 담당
+              <div style={{ fontSize:9, marginTop:5 }}>
+                {(() => {
+                  const valid   = form.lessonTypes.filter(n => allLessons.find(l=>l["레슨명"]===n));
+                  const invalid = form.lessonTypes.filter(n => !allLessons.find(l=>l["레슨명"]===n));
+                  return (
+                    <>
+                      {valid.length > 0 && <span style={{color:"#34d399"}}>✓ {valid.join(" · ")} 담당</span>}
+                      {invalid.length > 0 && <span style={{color:"#f87171", marginLeft:6}}>⚠️ 저장 시 제거: {invalid.join(", ")}</span>}
+                    </>
+                  );
+                })()}
               </div>
             )}
           </div>
