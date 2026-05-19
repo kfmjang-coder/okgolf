@@ -1479,25 +1479,505 @@ function BoardScreen({ coaches, myPhone, adminPw, showToast }) {
 // ─────────────────────────────────────────────
 //  관리자 (독립 컴포넌트)
 // ─────────────────────────────────────────────
+// ─────────────────────────────────────────────
+//  관리자 — PC 타임라인 뷰 + 모바일 뷰 통합
+// ─────────────────────────────────────────────
+
+// 화면 너비 훅
+function useIsPC() {
+  const [isPC, setIsPC] = useState(window.innerWidth >= 768);
+  useEffect(() => {
+    const fn = () => setIsPC(window.innerWidth >= 768);
+    window.addEventListener("resize", fn);
+    return () => window.removeEventListener("resize", fn);
+  }, []);
+  return isPC;
+}
+
+// 타임라인 날짜 유틸
+function tl_pad(n) { return String(n).padStart(2, "0"); }
+function tl_todayStr() {
+  const d = new Date();
+  return `${d.getFullYear()}-${tl_pad(d.getMonth()+1)}-${tl_pad(d.getDate())}`;
+}
+function tl_addDays(s, n) {
+  const d = new Date(s); d.setDate(d.getDate()+n);
+  return `${d.getFullYear()}-${tl_pad(d.getMonth()+1)}-${tl_pad(d.getDate())}`;
+}
+function tl_fmtKR(s) {
+  const d = new Date(s);
+  const DOW = ["일","월","화","수","목","금","토"];
+  return `${d.getMonth()+1}월 ${d.getDate()}일 (${DOW[d.getDay()]})`;
+}
+function tl_calcEnd(start, lessonType) {
+  const [h,m] = start.split(":").map(Number);
+  let dur = 30;
+  if ((lessonType||"").includes("1시간")) dur = 60;
+  else if ((lessonType||"").includes("45")) dur = 45;
+  const total = h*60+m+dur;
+  return `${tl_pad(Math.floor(total/60))}:${tl_pad(total%60)}`;
+}
+
+// PC 타임라인 컴포넌트
+function AdminTimeline({ coaches, adminPw, showToast }) {
+  const SLOT_H  = 48;
+  const COL_W   = 200;
+  const TIME_W  = 56;
+  const START_H = 9;
+  const END_H   = 22;
+  const TOTAL   = (END_H - START_H) * 2;
+
+  const [selDate, setSelDate]   = useState(tl_todayStr());
+  const [bookings, setBookings] = useState([]);
+  const [stats, setStats]       = useState(null);
+  const [loading, setLoading]   = useState(false);
+  const [selSlot, setSelSlot]   = useState(null);  // { coach, time, booking }
+  const [panelTab, setPanelTab] = useState("detail");
+  const [nowTop, setNowTop]     = useState(null);
+  // 대행 예약 폼 상태
+  const [bkName, setBkName]   = useState("");
+  const [bkPhone, setBkPhone] = useState("");
+  const [bkLesson, setBkLesson] = useState("개인30분");
+  const [bkNote, setBkNote]   = useState("");
+  const [bkSubmitting, setBkSubmitting] = useState(false);
+
+  const LESSON_TYPES = ["개인30분","개인1시간","그룹1시간","체험30분","주니어45분"];
+
+  // 데이터 로드
+  const load = useCallback(async () => {
+    setLoading(true);
+    try {
+      const [bkData, statsData] = await Promise.all([
+        apiGet({ action:"getBookings", date:selDate }),
+        apiPost({ action:"getConsoleStats", password:adminPw, date:selDate }),
+      ]);
+      setBookings(bkData || []);
+      setStats(statsData);
+    } catch(e) { showToast("❌ " + e.message); }
+    finally { setLoading(false); }
+  }, [selDate, adminPw]);
+
+  useEffect(() => { load(); }, [load]);
+
+  // 현재시간 라인
+  useEffect(() => {
+    const calc = () => {
+      if (selDate !== tl_todayStr()) { setNowTop(null); return; }
+      const now = new Date();
+      const h = now.getHours(), m = now.getMinutes();
+      if (h < START_H || h >= END_H) { setNowTop(null); return; }
+      setNowTop((h - START_H) * 2 * SLOT_H + (m / 30) * SLOT_H);
+    };
+    calc();
+    const t = setInterval(calc, 60000);
+    return () => clearInterval(t);
+  }, [selDate]);
+
+  // 슬롯 클릭
+  const onSlotClick = (coach, time, booking) => {
+    setSelSlot({ coach, time, booking });
+    setPanelTab(booking ? "detail" : "book");
+    setBkName(""); setBkPhone(""); setBkLesson("개인30분"); setBkNote("");
+  };
+
+  // 출석 처리
+  const doAttend = async (status) => {
+    if (!selSlot?.booking) return;
+    try {
+      await apiPost({ action:"checkAttend", bookingId:selSlot.booking["예약ID"], status, password:adminPw });
+      showToast(`✅ ${status} 처리 완료`);
+      setSelSlot(null);
+      load();
+    } catch(e) { showToast("❌ " + e.message); }
+  };
+
+  // 예약 취소
+  const doCancel = async () => {
+    if (!selSlot?.booking) return;
+    if (!window.confirm(`${selSlot.booking["수강생명"]}님의 예약을 취소할까요?`)) return;
+    try {
+      await apiPost({ action:"adminCancel", bookingId:selSlot.booking["예약ID"], reason:"관리자 취소", password:adminPw });
+      showToast("✅ 예약 취소 완료");
+      setSelSlot(null);
+      load();
+    } catch(e) { showToast("❌ " + e.message); }
+  };
+
+  // 대행 예약
+  const doBook = async () => {
+    if (!bkName || !bkPhone) { showToast("이름과 연락처를 입력해주세요."); return; }
+    setBkSubmitting(true);
+    try {
+      const res = await apiPost({
+        action:"book", coachId:selSlot.coach.id,
+        lessonType:bkLesson, date:selDate,
+        startTime:selSlot.time,
+        name:bkName, phone:bkPhone, note:bkNote,
+      });
+      showToast(`✅ 예약 완료! 부스 ${res.boothNo}번`);
+      setSelSlot(null);
+      load();
+    } catch(e) { showToast("❌ " + e.message); }
+    finally { setBkSubmitting(false); }
+  };
+
+  // 슬롯 높이 계산
+  const timeToTop = (hhmm) => {
+    const [h,m] = hhmm.split(":").map(Number);
+    return (h - START_H) * 2 * SLOT_H + (m === 30 ? SLOT_H : 0);
+  };
+  const durSlots = (lessonType) => {
+    if ((lessonType||"").includes("1시간")) return 2;
+    if ((lessonType||"").includes("45"))   return 1.5;
+    return 1;
+  };
+
+  const statusColor = { "예약":"#34d399","완료":"#38bdf8","노쇼":"#f87171","취소":"#4b5675" };
+
+  return (
+    <div style={{ display:"flex", height:"calc(100vh - 120px)", overflow:"hidden", margin:"0 -14px" }}>
+      {/* 타임라인 영역 */}
+      <div style={{ flex:1, overflow:"auto", position:"relative" }}>
+        {/* 날짜 네비 + 통계 */}
+        <div style={{
+          position:"sticky", top:0, zIndex:50,
+          background:"#0d0f14", borderBottom:"2px solid #1f2435",
+          display:"flex", alignItems:"center", gap:8, padding:"8px 12px",
+        }}>
+          <button onClick={() => setSelDate(d => tl_addDays(d,-1))}
+            style={{ background:"none", border:"none", color:"#94a3b8", fontSize:18, cursor:"pointer" }}>‹</button>
+          <div style={{ fontWeight:700, fontSize:13, minWidth:160, textAlign:"center" }}>{tl_fmtKR(selDate)}</div>
+          <button onClick={() => setSelDate(d => tl_addDays(d,1))}
+            style={{ background:"none", border:"none", color:"#94a3b8", fontSize:18, cursor:"pointer" }}>›</button>
+          <button onClick={() => setSelDate(tl_todayStr())}
+            style={{ fontSize:10, padding:"3px 8px", borderRadius:5, background:"#1a1e28", border:"1px solid #2d3347", color:"#94a3b8", cursor:"pointer" }}>오늘</button>
+          <div style={{ display:"flex", gap:6, marginLeft:"auto" }}>
+            {[
+              {label:"예약", val:stats?.totalBookings??"-", color:"#34d399"},
+              {label:"완료", val:stats?.doneBookings??"-",  color:"#38bdf8"},
+              {label:"노쇼", val:stats?.noShowBookings??"-",color:"#f87171"},
+            ].map(s => (
+              <div key={s.label} style={{ background:"#181c25", border:"1px solid #2d3347", borderRadius:7, padding:"4px 10px", textAlign:"center" }}>
+                <div style={{ fontSize:14, fontWeight:900, color:s.color, fontFamily:"monospace" }}>{s.val}</div>
+                <div style={{ fontSize:9, color:"#4b5675" }}>{s.label}</div>
+              </div>
+            ))}
+          </div>
+          <button onClick={load} style={{ background:"none", border:"1px solid #2d3347", borderRadius:6, color:"#94a3b8", fontSize:13, padding:"4px 8px", cursor:"pointer" }}>🔄</button>
+          {loading && <div style={{ fontSize:10, color:"#34d399" }}>⏳</div>}
+        </div>
+
+        {/* 프로 헤더 + 타임라인 */}
+        <div style={{ display:"flex", minWidth:"fit-content" }}>
+          {/* 시간 축 */}
+          <div style={{ width:TIME_W, flexShrink:0, borderRight:"1px solid #1f2435", position:"sticky", left:0, zIndex:40, background:"#0d0f14" }}>
+            {/* 헤더 빈칸 */}
+            <div style={{ height:48, borderBottom:"2px solid #1f2435" }} />
+            {/* 시간 눈금 */}
+            {Array.from({length:TOTAL}, (_,i) => {
+              const h = START_H + Math.floor(i/2);
+              const m = i%2===0 ? "00" : "30";
+              return (
+                <div key={i} style={{
+                  height:SLOT_H, borderBottom:`1px solid ${m==="00"?"#1f2435":"#141720"}`,
+                  display:"flex", alignItems:"flex-start", padding:"3px 6px 0",
+                  fontFamily:"monospace", fontSize:9,
+                  color: m==="00" ? "#4b5675" : "transparent",
+                }}>{`${tl_pad(h)}:00`}</div>
+              );
+            })}
+          </div>
+
+          {/* 프로 컬럼들 */}
+          {coaches.map(coach => {
+            const coachBk = bookings.filter(b => b["프로ID"] === coach.id);
+            const activeCnt = coachBk.filter(b => b["상태"]==="예약").length;
+            return (
+              <div key={coach.id} style={{ width:COL_W, flexShrink:0, borderRight:"1px solid #1f2435", position:"relative" }}>
+                {/* 프로 헤더 */}
+                <div style={{
+                  height:48, borderBottom:`2px solid ${coach.color||"#34d399"}`,
+                  display:"flex", alignItems:"center", gap:8, padding:"0 10px",
+                  background:"#0d0f14", position:"sticky", top:48, zIndex:30,
+                }}>
+                  <div style={{
+                    width:28, height:28, borderRadius:"50%", flexShrink:0,
+                    background:"#1f2435", border:`1.5px solid ${coach.color||"#34d399"}`,
+                    display:"flex", alignItems:"center", justifyContent:"center",
+                    fontSize:14, overflow:"hidden",
+                  }}>
+                    {coach.image ? <img src={coach.image} alt="" style={{width:"100%",height:"100%",objectFit:"cover"}}/> : coach.icon||"🏌️"}
+                  </div>
+                  <div style={{flex:1}}>
+                    <div style={{fontSize:11,fontWeight:700}}>{coach.name}</div>
+                    <div style={{fontSize:9,color:"#4b5675"}}>{coach.title}</div>
+                  </div>
+                  <div style={{
+                    fontSize:9, padding:"2px 6px", borderRadius:4, fontWeight:700,
+                    background:`${coach.color||"#34d399"}22`, color:coach.color||"#34d399",
+                  }}>{activeCnt}건</div>
+                </div>
+
+                {/* 슬롯 셀 */}
+                <div style={{ position:"relative" }}>
+                  {Array.from({length:TOTAL}, (_,i) => {
+                    const h = START_H + Math.floor(i/2);
+                    const m = i%2===0 ? "00" : "30";
+                    const time = `${tl_pad(h)}:${m}`;
+                    return (
+                      <div key={time} onClick={() => onSlotClick(coach, time, null)}
+                        style={{
+                          height:SLOT_H, borderBottom:`1px solid ${m==="00"?"#1f2435":"#0f111a"}`,
+                          cursor:"pointer", position:"relative", transition:"background .1s",
+                        }}
+                        onMouseEnter={e => e.currentTarget.style.background="rgba(255,255,255,.02)"}
+                        onMouseLeave={e => e.currentTarget.style.background="transparent"}
+                      >
+                        <div style={{
+                          position:"absolute", inset:0, display:"flex",
+                          alignItems:"center", justifyContent:"center",
+                          opacity:0, fontSize:18, color:"#2d3347",
+                          transition:"opacity .15s",
+                        }}
+                          onMouseEnter={e => e.currentTarget.style.opacity=1}
+                          onMouseLeave={e => e.currentTarget.style.opacity=0}
+                        >＋</div>
+                      </div>
+                    );
+                  })}
+
+                  {/* 예약 블록 */}
+                  {coachBk.map(b => {
+                    const rawTime = String(b["시작시간"]||"").slice(0,5);
+                    if (!rawTime || rawTime < `${tl_pad(START_H)}:00`) return null;
+                    const dur   = durSlots(b["레슨종류"]);
+                    const top   = timeToTop(rawTime);
+                    const ht    = dur * SLOT_H - 4;
+                    const sc    = statusColor[b["상태"]] || "#94a3b8";
+                    const isDone = b["상태"] !== "예약";
+                    return (
+                      <div key={b["예약ID"]}
+                        onClick={e => { e.stopPropagation(); onSlotClick(coach, rawTime, b); }}
+                        style={{
+                          position:"absolute", left:3, right:3,
+                          top:top+2, height:ht,
+                          borderRadius:7, padding:"5px 8px",
+                          background:`${sc}18`,
+                          border:`1px solid ${sc}55`,
+                          cursor:"pointer", zIndex:10,
+                          opacity: isDone ? .65 : 1,
+                          transition:"all .15s",
+                          overflow:"hidden",
+                        }}
+                        onMouseEnter={e => e.currentTarget.style.transform="translateX(2px)"}
+                        onMouseLeave={e => e.currentTarget.style.transform="translateX(0)"}
+                      >
+                        <div style={{fontSize:8,color:"#4b5675",fontFamily:"monospace",marginBottom:2}}>
+                          {rawTime}~{tl_calcEnd(rawTime,b["레슨종류"])}
+                        </div>
+                        <div style={{fontSize:11,fontWeight:700,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>
+                          {b["수강생명"]}
+                        </div>
+                        {ht > 36 && <div style={{fontSize:9,color:"#94a3b8",marginTop:1}}>{b["레슨종류"]}</div>}
+                        <div style={{
+                          position:"absolute", top:4, right:5,
+                          fontSize:8, padding:"1px 4px", borderRadius:3, fontWeight:700,
+                          background:`${sc}33`, color:sc,
+                        }}>{b["상태"]}</div>
+                      </div>
+                    );
+                  })}
+
+                  {/* 현재시간 라인 */}
+                  {nowTop !== null && (
+                    <div style={{
+                      position:"absolute", left:0, right:0, top:nowTop,
+                      height:2, background:"#f87171", zIndex:20, pointerEvents:"none",
+                    }}>
+                      <div style={{
+                        position:"absolute", left:-4, top:-4,
+                        width:10, height:10, borderRadius:"50%", background:"#f87171",
+                      }}/>
+                    </div>
+                  )}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* 사이드 패널 */}
+      {selSlot && (
+        <div style={{
+          width:280, flexShrink:0,
+          background:"#0d0f14", borderLeft:"1px solid #1f2435",
+          display:"flex", flexDirection:"column", overflow:"hidden",
+        }}>
+          {/* 패널 헤더 */}
+          <div style={{ padding:"12px 14px", borderBottom:"1px solid #1f2435", display:"flex", alignItems:"center", justifyContent:"space-between" }}>
+            <div style={{ fontSize:13, fontWeight:700 }}>
+              {selSlot.booking ? "📋 예약 상세" : "➕ 대행 예약"}
+            </div>
+            <button onClick={() => setSelSlot(null)}
+              style={{ background:"none", border:"none", color:"#4b5675", fontSize:16, cursor:"pointer" }}>✕</button>
+          </div>
+
+          {/* 탭 (예약 있을 때만) */}
+          {selSlot.booking && (
+            <div style={{ display:"flex", gap:4, padding:"8px 14px", borderBottom:"1px solid #1f2435" }}>
+              {["detail","book"].map(t => (
+                <button key={t} onClick={() => setPanelTab(t)} style={{
+                  flex:1, padding:"5px 0", borderRadius:7, fontSize:10, cursor:"pointer",
+                  fontWeight: panelTab===t ? 700 : 400,
+                  background: panelTab===t ? "#34d399" : "#1a1e28",
+                  color: panelTab===t ? "#000" : "#94a3b8",
+                  border: panelTab===t ? "none" : "1px solid #2d3347",
+                }}>{t==="detail" ? "📋 상세" : "➕ 예약"}</button>
+              ))}
+            </div>
+          )}
+
+          {/* 패널 바디 */}
+          <div style={{ flex:1, overflowY:"auto", padding:"12px 14px" }}>
+
+            {/* 슬롯 정보 */}
+            <div style={{ background:"#181c25", border:"1px solid #2d3347", borderRadius:8, padding:"10px 12px", marginBottom:12 }}>
+              <div style={{ fontSize:9, fontWeight:700, letterSpacing:1, color:"#4b5675", marginBottom:6, textTransform:"uppercase" }}>슬롯 정보</div>
+              <div style={{ display:"flex", justifyContent:"space-between", fontSize:11, marginBottom:3 }}>
+                <span style={{ color:"#4b5675" }}>프로</span><span style={{ fontWeight:700 }}>{selSlot.coach.name}</span>
+              </div>
+              <div style={{ display:"flex", justifyContent:"space-between", fontSize:11, marginBottom:3 }}>
+                <span style={{ color:"#4b5675" }}>날짜</span><span>{selDate}</span>
+              </div>
+              <div style={{ display:"flex", justifyContent:"space-between", fontSize:11 }}>
+                <span style={{ color:"#4b5675" }}>시간</span>
+                <span style={{ fontWeight:700, color:"#34d399", fontFamily:"monospace" }}>{selSlot.time}</span>
+              </div>
+            </div>
+
+            {/* 예약 상세 탭 */}
+            {(!selSlot.booking || panelTab==="detail") && selSlot.booking && (
+              <div>
+                <div style={{ background:"#181c25", border:"1px solid #2d3347", borderRadius:8, padding:"10px 12px", marginBottom:12 }}>
+                  <div style={{ fontSize:9, fontWeight:700, letterSpacing:1, color:"#4b5675", marginBottom:6, textTransform:"uppercase" }}>수강생</div>
+                  {[
+                    ["이름",   selSlot.booking["수강생명"]],
+                    ["연락처", selSlot.booking["연락처"]],
+                    ["레슨",   selSlot.booking["레슨종류"]],
+                    ["부스",   (selSlot.booking["부스번호"]||"-")+"번"],
+                    ["상태",   selSlot.booking["상태"]],
+                  ].map(([k,v]) => (
+                    <div key={k} style={{ display:"flex", justifyContent:"space-between", fontSize:11, marginBottom:4 }}>
+                      <span style={{ color:"#4b5675" }}>{k}</span>
+                      <span style={{ fontWeight:600, color: k==="상태" ? (statusColor[v]||"#94a3b8") : "#e2e8f0" }}>{v}</span>
+                    </div>
+                  ))}
+                  {selSlot.booking["요청사항"] && (
+                    <div style={{ fontSize:10, color:"#94a3b8", marginTop:6, paddingTop:6, borderTop:"1px solid #1f2435" }}>
+                      💬 {selSlot.booking["요청사항"]}
+                    </div>
+                  )}
+                </div>
+
+                {/* 출석 버튼 */}
+                {selSlot.booking["상태"]==="예약" && (
+                  <div>
+                    <div style={{ fontSize:9, fontWeight:700, letterSpacing:1, color:"#4b5675", marginBottom:8, textTransform:"uppercase" }}>출석 처리</div>
+                    {[
+                      ["출석완료","#34d399","✅"],
+                      ["지각출석","#fbbf24","⏰"],
+                      ["노쇼",    "#f87171","🚫"],
+                    ].map(([s,c,ic]) => (
+                      <button key={s} onClick={() => doAttend(s)} style={{
+                        width:"100%", border:`1px solid ${c}44`,
+                        background:`${c}18`, color:c, borderRadius:7,
+                        padding:"8px 0", fontSize:11, fontWeight:700,
+                        cursor:"pointer", marginBottom:5,
+                        fontFamily:"'Noto Sans KR', sans-serif",
+                        transition:"all .15s",
+                      }}
+                        onMouseEnter={e => { e.currentTarget.style.background=c; e.currentTarget.style.color="#000"; }}
+                        onMouseLeave={e => { e.currentTarget.style.background=`${c}18`; e.currentTarget.style.color=c; }}
+                      >{ic} {s}</button>
+                    ))}
+                    <div style={{ height:8 }}/>
+                    <button onClick={doCancel} style={{
+                      width:"100%", border:"1px solid rgba(248,113,113,.3)",
+                      background:"rgba(248,113,113,.1)", color:"#f87171", borderRadius:7,
+                      padding:"7px 0", fontSize:10, cursor:"pointer",
+                      fontFamily:"'Noto Sans KR', sans-serif",
+                    }}>❌ 예약 취소</button>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* 대행 예약 탭 */}
+            {(!selSlot.booking || panelTab==="book") && (
+              <div>
+                <div style={{ fontSize:9, fontWeight:700, letterSpacing:1, color:"#4b5675", marginBottom:10, textTransform:"uppercase" }}>수강생 정보</div>
+                {[
+                  { label:"이름 *",  val:bkName,   set:setBkName,   ph:"이름",              type:"text" },
+                  { label:"연락처 *",val:bkPhone,  set:setBkPhone,  ph:"010-0000-0000",     type:"tel"  },
+                  { label:"요청사항",val:bkNote,   set:setBkNote,   ph:"요청사항 (선택)",   type:"text" },
+                ].map(f => (
+                  <div key={f.label} style={{ marginBottom:8 }}>
+                    <div style={{ fontSize:9, color:"#4b5675", marginBottom:3 }}>{f.label}</div>
+                    <input value={f.val} onChange={e => f.set(e.target.value)}
+                      placeholder={f.ph} type={f.type}
+                      style={{ ...INP, fontSize:11 }} />
+                  </div>
+                ))}
+                <div style={{ marginBottom:12 }}>
+                  <div style={{ fontSize:9, color:"#4b5675", marginBottom:3 }}>레슨 종류 *</div>
+                  <div style={{ display:"flex", flexWrap:"wrap", gap:4 }}>
+                    {LESSON_TYPES.map(t => (
+                      <button key={t} onClick={() => setBkLesson(t)} style={{
+                        padding:"4px 8px", borderRadius:5, fontSize:10, cursor:"pointer",
+                        fontWeight: bkLesson===t ? 700 : 400,
+                        background: bkLesson===t ? "#34d399" : "#1a1e28",
+                        color: bkLesson===t ? "#000" : "#94a3b8",
+                        border: bkLesson===t ? "none" : "1px solid #2d3347",
+                      }}>{t}</button>
+                    ))}
+                  </div>
+                </div>
+                <button onClick={doBook} disabled={bkSubmitting} style={{
+                  width:"100%", background:"#34d399", border:"none",
+                  borderRadius:8, color:"#000", fontSize:12, fontWeight:700,
+                  padding:"9px 0", cursor:bkSubmitting?"not-allowed":"pointer",
+                  opacity:bkSubmitting?.6:1,
+                  fontFamily:"'Noto Sans KR', sans-serif",
+                }}>{bkSubmitting ? "예약 중..." : "✅ 대행 예약 완료"}</button>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 function AdminScreen({ coaches, setCoaches, showToast }) {
   const [pw, setPw]             = useState("");
-  const [adminPw, setAdminPw]   = useState(""); // 실제 인증된 비밀번호
-  const [adminTab, setAdminTab] = useState("dash");
+  const [adminPw, setAdminPw]   = useState("");
+  const [adminTab, setAdminTab] = useState("timeline");
   const [stats, setStats]       = useState(null);
   const [statsLoading, setStatsLoading] = useState(false);
   const [attend, setAttend]     = useState([]);
   const [proList, setProList]   = useState([]);
   const [reports, setReports]   = useState([]);
   const [loadError, setLoadError] = useState("");
+  const isPC = useIsPC();
 
-  // adminPw 를 직접 파라미터로 받아 타이밍 문제 완전 해결
   const loadData = useCallback(async (password, tab) => {
     const usePw  = password || adminPw;
     const useTab = tab     || adminTab;
     if (!usePw) return;
     setLoadError("");
     try {
-      if (useTab === "dash") {
+      if (useTab === "dash" || useTab === "timeline") {
         setStatsLoading(true);
         setStats(null);
         const s = await apiPost({ action: "getConsoleStats", password: usePw });
@@ -1523,31 +2003,31 @@ function AdminScreen({ coaches, setCoaches, showToast }) {
     }
   }, [adminPw, adminTab]);
 
-  // 탭 변경 시 데이터 로드
   useEffect(() => {
     if (adminPw) loadData(adminPw, adminTab);
   }, [adminTab, adminPw]);
 
-  // 로그인 처리 — password를 직접 넘겨 타이밍 문제 방지
+  // PC 전환 시 자동으로 타임라인 탭
+  useEffect(() => {
+    if (isPC && adminPw && adminTab === "dash") setAdminTab("timeline");
+  }, [isPC]);
+
   const handleLogin = async () => {
     if (!pw) { showToast("비밀번호를 입력하세요."); return; }
-    // 비밀번호 사전 검증 (getConsoleStats 호출로 확인)
     try {
       setStatsLoading(true);
       setLoadError("");
       const s = await apiPost({ action: "getConsoleStats", password: pw });
-      // 성공하면 로그인 확정
       setAdminPw(pw);
       setStats(s);
       setStatsLoading(false);
-      setAdminTab("dash");
+      setAdminTab(isPC ? "timeline" : "dash");
     } catch (e) {
       setStatsLoading(false);
       showToast("❌ " + e.message);
     }
   };
 
-  // 로그인 전 화면
   if (!adminPw) return (
     <div style={{ padding: 40, textAlign: "center" }}>
       <div style={{ fontSize: 40, marginBottom: 12 }}>⚙️</div>
@@ -1562,18 +2042,29 @@ function AdminScreen({ coaches, setCoaches, showToast }) {
     </div>
   );
 
-  const TABS = [
-    { id: "dash",   label: "📊 현황" },
-    { id: "attend", label: "✅ 출석" },
-    { id: "pro",    label: "🏌️ 프로" },
-    { id: "report", label: "🚨 신고" },
-  ];
+  // PC: 타임라인 탭 포함
+  const TABS = isPC
+    ? [
+        { id:"timeline", label:"📅 타임라인" },
+        { id:"dash",     label:"📊 현황"     },
+        { id:"attend",   label:"✅ 출석"     },
+        { id:"pro",      label:"🏌️ 프로"    },
+        { id:"report",   label:"🚨 신고"     },
+      ]
+    : [
+        { id:"dash",   label:"📊 현황" },
+        { id:"attend", label:"✅ 출석" },
+        { id:"pro",    label:"🏌️ 프로"},
+        { id:"report", label:"🚨 신고" },
+      ];
 
   return (
-    <div style={{ padding: "12px 14px" }}>
-      {/* 헤더 */}
+    <div style={{ padding: adminTab === "timeline" ? "12px 14px 0" : "12px 14px" }}>
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 10 }}>
-        <div style={{ fontSize: 15, fontWeight: 900 }}>⚙️ 관리자</div>
+        <div style={{ fontSize: 15, fontWeight: 900 }}>
+          ⚙️ 관리자
+          {isPC && <span style={{ fontSize:10, color:"#34d399", marginLeft:8, padding:"2px 6px", border:"1px solid rgba(52,211,153,.3)", borderRadius:4 }}>PC 모드</span>}
+        </div>
         <div style={{ display: "flex", gap: 8 }}>
           <button onClick={() => loadData(adminPw, adminTab)}
             style={{ fontSize: 11, background: "none", border: "none", color: "#94a3b8", cursor: "pointer" }}>🔄</button>
@@ -1582,11 +2073,10 @@ function AdminScreen({ coaches, setCoaches, showToast }) {
         </div>
       </div>
 
-      {/* 탭 */}
-      <div style={{ display: "flex", gap: 5, marginBottom: 14 }}>
+      <div style={{ display: "flex", gap: 5, marginBottom: adminTab === "timeline" ? 0 : 14, overflowX:"auto" }}>
         {TABS.map(t => (
           <button key={t.id} onClick={() => setAdminTab(t.id)} style={{
-            flex: 1, padding: "6px 0", borderRadius: 8, fontSize: 11, cursor: "pointer",
+            flexShrink:0, padding: "6px 10px", borderRadius: 8, fontSize: 11, cursor: "pointer",
             fontWeight: adminTab === t.id ? 700 : 400,
             background: adminTab === t.id ? "#34d399" : "#1a1e28",
             color: adminTab === t.id ? "#000" : "#94a3b8",
@@ -1595,11 +2085,11 @@ function AdminScreen({ coaches, setCoaches, showToast }) {
         ))}
       </div>
 
-      {/* 콘텐츠 */}
-      {adminTab === "dash"   && <AdminDash stats={stats} loading={statsLoading} error={loadError} onRetry={() => loadData(adminPw, "dash")} />}
-      {adminTab === "attend" && <AdminAttendTab list={attend} adminPw={adminPw} showToast={showToast} onDone={() => loadData(adminPw, "attend")} />}
-      {adminTab === "pro"    && <AdminProTab list={proList} adminPw={adminPw} showToast={showToast} onDone={() => loadData(adminPw, "pro")} setCoaches={setCoaches} />}
-      {adminTab === "report" && <AdminReportTab list={reports} adminPw={adminPw} showToast={showToast} onDone={() => loadData(adminPw, "report")} />}
+      {adminTab === "timeline" && <AdminTimeline coaches={coaches} adminPw={adminPw} showToast={showToast} />}
+      {adminTab === "dash"     && <AdminDash stats={stats} loading={statsLoading} error={loadError} onRetry={() => loadData(adminPw, "dash")} />}
+      {adminTab === "attend"   && <AdminAttendTab list={attend} adminPw={adminPw} showToast={showToast} onDone={() => loadData(adminPw, "attend")} />}
+      {adminTab === "pro"      && <AdminProTab list={proList} adminPw={adminPw} showToast={showToast} onDone={() => loadData(adminPw, "pro")} setCoaches={setCoaches} />}
+      {adminTab === "report"   && <AdminReportTab list={reports} adminPw={adminPw} showToast={showToast} onDone={() => loadData(adminPw, "report")} />}
     </div>
   );
 }
