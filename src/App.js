@@ -326,15 +326,8 @@ function BookScreen({ coaches, selPro, setSelPro, setDetailPro, showToast, setTa
         }
       })
       .catch(() => {
-        // 로드 실패 시 하드코딩 폴백
-        const fallback = [
-          { "레슨ID":"F1","레슨명":"개인30분","소요시간(분)":30,"색상":"#34d399" },
-          { "레슨ID":"F2","레슨명":"개인1시간","소요시간(분)":60,"색상":"#38bdf8" },
-          { "레슨ID":"F3","레슨명":"그룹1시간","소요시간(분)":60,"색상":"#a78bfa" },
-          { "레슨ID":"F4","레슨명":"체험30분","소요시간(분)":30,"색상":"#fbbf24"  },
-          { "레슨ID":"F5","레슨명":"주니어45분","소요시간(분)":45,"색상":"#f87171"},
-        ];
-        setAllLessons(fallback);
+        // 로드 실패 시 빈 배열 유지 (레슨 등록 유도)
+        setAllLessons([]);
       });
   }, []);
 
@@ -1325,21 +1318,26 @@ function RepeatBookingTab({ phone, repeats, loading, showToast, onCancel, onRefr
   const [myPhone, setMyPhone]     = useState(phone || "");
   const [cycle, setCycle]         = useState("매주"); // "매주" | "격주"
 
-  const DOW_KR     = ["일","월","화","수","목","금","토"];
-  const LESSON_TYPES = ["개인30분","개인1시간","그룹1시간","체험30분","주니어45분"];
+  const [dbLessons, setDbLessons] = useState([]); // DB 레슨 종류
+
+  const DOW_KR = ["일","월","화","수","목","금","토"];
   // 20분 단위 시간 목록 (06:00 ~ 21:40)
   const TIMES = ["06:00","06:20","06:40","07:00","07:20","07:40","08:00","08:20","08:40","09:00","09:20","09:40","10:00","10:20","10:40","11:00","11:20","11:40","12:00","12:20","12:40","13:00","13:20","13:40","14:00","14:20","14:40","15:00","15:20","15:40","16:00","16:20","16:40","17:00","17:20","17:40","18:00","18:20","18:40","19:00","19:20","19:40","20:00","20:20","20:40","21:00","21:20","21:40"];
 
-  // 폼 열 때 프로 목록 로드
+  // 폼 열 때 프로 목록 + 레슨 종류 로드
   const openForm = async () => {
     setShowForm(true);
-    if (coaches.length === 0) {
-      try {
-        const c = await apiGet({ action:"getCoaches" });
-        setCoaches(c||[]);
-        if (c && c.length > 0) setSelCoach(c[0].id);
-      } catch(e) {}
-    }
+    try {
+      const [c, l] = await Promise.all([
+        coaches.length === 0 ? apiGet({ action:"getCoaches" }) : Promise.resolve(coaches),
+        dbLessons.length === 0 ? apiGet({ action:"getLessons" }) : Promise.resolve(dbLessons),
+      ]);
+      if (c && c.length > 0) { setCoaches(c); setSelCoach(c[0].id); }
+      if (l && l.length > 0) {
+        setDbLessons(l);
+        setSelLesson(l[0]["레슨명"]);
+      }
+    } catch(e) {}
   };
 
   // 반복 예약 등록
@@ -1427,15 +1425,19 @@ function RepeatBookingTab({ phone, repeats, loading, showToast, onCancel, onRefr
           <div style={{ marginBottom:8 }}>
             <div style={{ fontSize:9, color:"#4b5675", marginBottom:4 }}>레슨 종류 *</div>
             <div style={{ display:"flex", flexWrap:"wrap", gap:4 }}>
-              {LESSON_TYPES.map(t => (
-                <button key={t} onClick={() => setSelLesson(t)} style={{
-                  padding:"4px 8px", borderRadius:5, fontSize:10, cursor:"pointer",
-                  fontWeight: selLesson===t ? 700 : 400,
-                  background: selLesson===t ? "#34d399" : "#1a1e28",
-                  color: selLesson===t ? "#000" : "#94a3b8",
-                  border: selLesson===t ? "none" : "1px solid #2d3347",
-                }}>{t}</button>
-              ))}
+              {(dbLessons.length > 0 ? dbLessons : []).map(l => {
+                const color = l["색상"] || "#34d399";
+                const isSel = selLesson === l["레슨명"];
+                return (
+                  <button key={l["레슨ID"]} onClick={() => setSelLesson(l["레슨명"])} style={{
+                    padding:"4px 8px", borderRadius:5, fontSize:10, cursor:"pointer",
+                    fontWeight: isSel ? 700 : 400,
+                    background: isSel ? color : "#1a1e28",
+                    color: isSel ? "#000" : "#94a3b8",
+                    border: isSel ? "none" : `1px solid ${color}44`,
+                  }}>{l["레슨명"]}</button>
+                );
+              })}
             </div>
           </div>
 
@@ -2139,11 +2141,20 @@ function AdminTimeline({ coaches, adminPw, showToast }) {
   // 대행 예약 폼 상태
   const [bkName, setBkName]   = useState("");
   const [bkPhone, setBkPhone] = useState("");
-  const [bkLesson, setBkLesson] = useState("개인30분");
+  const [bkLesson, setBkLesson] = useState("");
   const [bkNote, setBkNote]   = useState("");
   const [bkSubmitting, setBkSubmitting] = useState(false);
+  const [tlLessons, setTlLessons] = useState([]); // DB 레슨 종류
 
-  const LESSON_TYPES = ["개인30분","개인1시간","그룹1시간","체험30분","주니어45분"];
+  // 레슨 종류 로드
+  useEffect(() => {
+    apiGet({ action:"getLessons" }).then(d => {
+      if (d && d.length > 0) {
+        setTlLessons(d);
+        setBkLesson(d[0]["레슨명"]);
+      }
+    }).catch(()=>{});
+  }, []);
 
   // 데이터 로드
   const load = useCallback(async () => {
@@ -2537,15 +2548,19 @@ function AdminTimeline({ coaches, adminPw, showToast }) {
                 <div style={{ marginBottom:12 }}>
                   <div style={{ fontSize:9, color:"#4b5675", marginBottom:3 }}>레슨 종류 *</div>
                   <div style={{ display:"flex", flexWrap:"wrap", gap:4 }}>
-                    {LESSON_TYPES.map(t => (
-                      <button key={t} onClick={() => setBkLesson(t)} style={{
-                        padding:"4px 8px", borderRadius:5, fontSize:10, cursor:"pointer",
-                        fontWeight: bkLesson===t ? 700 : 400,
-                        background: bkLesson===t ? "#34d399" : "#1a1e28",
-                        color: bkLesson===t ? "#000" : "#94a3b8",
-                        border: bkLesson===t ? "none" : "1px solid #2d3347",
-                      }}>{t}</button>
-                    ))}
+                    {(tlLessons.length > 0 ? tlLessons : []).map(l => {
+                      const color = l["색상"] || "#34d399";
+                      const isSel = bkLesson === l["레슨명"];
+                      return (
+                        <button key={l["레슨ID"]} onClick={() => setBkLesson(l["레슨명"])} style={{
+                          padding:"4px 8px", borderRadius:5, fontSize:10, cursor:"pointer",
+                          fontWeight: isSel ? 700 : 400,
+                          background: isSel ? color : "#1a1e28",
+                          color: isSel ? "#000" : "#94a3b8",
+                          border: isSel ? "none" : `1px solid ${color}44`,
+                        }}>{l["레슨명"]}</button>
+                      );
+                    })}
                   </div>
                 </div>
                 <button onClick={doBook} disabled={bkSubmitting} style={{
