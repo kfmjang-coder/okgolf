@@ -333,15 +333,44 @@ function BookScreen({ coaches, allLessons: initLessons, selPro, setSelPro, setDe
     return d.toISOString().slice(0, 10);
   });
 
-  // 날짜 선택 시 슬롯 자동 로드
+  // 슬롯 캐시 (날짜별 메모리 캐시)
+  const slotCacheRef = React.useRef({});
+
+  // 날짜 선택 시 슬롯 로드 (캐시 우선)
   useEffect(() => {
     if (!selPro || !selDate) return;
-    setSelSlot(""); // 날짜 바뀌면 선택 시간 초기화
+    setSelSlot("");
+    const cacheKey = selPro.id + "_" + selDate;
+
+    if (slotCacheRef.current[cacheKey]) {
+      // ★ 캐시 히트 — 즉시 표시 (0ms)
+      setSlots(slotCacheRef.current[cacheKey]);
+      return;
+    }
+
     setSlotsLoading(true);
     apiGet({ action: "getSlots", coachId: selPro.id, date: selDate })
-      .then(setSlots)
+      .then(data => {
+        slotCacheRef.current[cacheKey] = data; // 캐시 저장
+        setSlots(data);
+      })
       .catch(e => showToast(e.message))
       .finally(() => setSlotsLoading(false));
+  }, [selPro, selDate]);
+
+  // ★ 프리페치 — 날짜 목록 렌더링 시 인접 날짜 슬롯 미리 로드
+  useEffect(() => {
+    if (!selPro || !selDate) return;
+    const idx = dateList.indexOf(selDate);
+    const prefetchDates = dateList.slice(idx + 1, idx + 3); // 다음 2일 미리 로드
+    prefetchDates.forEach(date => {
+      const cacheKey = selPro.id + "_" + date;
+      if (!slotCacheRef.current[cacheKey]) {
+        apiGet({ action: "getSlots", coachId: selPro.id, date })
+          .then(data => { slotCacheRef.current[cacheKey] = data; })
+          .catch(() => {});
+      }
+    });
   }, [selPro, selDate]);
 
   const doBook = async () => {
