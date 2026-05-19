@@ -263,12 +263,7 @@ function ProDetailModal({ pro, onClose, onSelect }) {
 // ─────────────────────────────────────────────
 //  홈 화면 (독립 컴포넌트 — Hook 규칙 준수)
 // ─────────────────────────────────────────────
-function HomeScreen({ coaches, selPro, setSelPro, setTab, setBookStep, setDetailPro }) {
-  const [pinned, setPinned] = useState([]);
-
-  useEffect(() => {
-    apiGet({ action: "getPinnedPosts" }).then(setPinned).catch(() => {});
-  }, []);
+function HomeScreen({ coaches, pinned, selPro, setSelPro, setTab, setBookStep, setDetailPro }) {
 
   return (
     <div style={{ padding: "12px 14px" }}>
@@ -301,7 +296,7 @@ function HomeScreen({ coaches, selPro, setSelPro, setTab, setBookStep, setDetail
 // ─────────────────────────────────────────────
 //  예약 화면 — STEP 1(프로+레슨) / STEP 2(날짜+시간 한화면) / STEP 3(정보입력)
 // ─────────────────────────────────────────────
-function BookScreen({ coaches, selPro, setSelPro, setDetailPro, showToast, setTab }) {
+function BookScreen({ coaches, allLessons: initLessons, selPro, setSelPro, setDetailPro, showToast, setTab }) {
   const [step, setStep]             = useState(1);
   const [lessonType, setLessonType] = useState("개인30분");
   const [selDate, setSelDate]       = useState("");
@@ -314,22 +309,15 @@ function BookScreen({ coaches, selPro, setSelPro, setDetailPro, showToast, setTa
   const [bPeople, setBPeople]       = useState(1);
   const [submitting, setSubmitting] = useState(false);
 
-  const [allLessons, setAllLessons] = useState([]);  // DB 레슨 종류
+  const [allLessons, setAllLessons] = useState(() => initLessons || []);
 
-  // 컴포넌트 마운트 시 레슨 종류 로드
+  // initLessons props 변경 시 동기화
   useEffect(() => {
-    apiGet({ action:"getLessons" })
-      .then(data => {
-        if (data && data.length > 0) {
-          setAllLessons(data);
-          setLessonType(data[0]["레슨명"]); // 첫 번째 레슨을 기본값으로
-        }
-      })
-      .catch(() => {
-        // 로드 실패 시 빈 배열 유지 (레슨 등록 유도)
-        setAllLessons([]);
-      });
-  }, []);
+    if (initLessons && initLessons.length > 0) {
+      setAllLessons(initLessons);
+      setLessonType(prev => prev || initLessons[0]["레슨명"]);
+    }
+  }, [initLessons]);
 
   // 선택된 프로가 담당하는 레슨 종류만 필터
   const LESSON_TYPES_RAW = selPro
@@ -4231,12 +4219,22 @@ export default function App() {
     }
   }, [theme]);
 
+  const [allLessons, setAllLessons] = useState([]);   // 전역 레슨 종류
+  const [pinnedPost, setPinnedPost] = useState([]);   // 공지사항
+  const [initLoading, setInitLoading] = useState(true); // 초기 로딩
+
   const showToast = useCallback(msg => setToast(msg), []);
 
+  // ── 초기 데이터 단일 호출 (getCoaches + getLessons + getPinnedPosts)
   useEffect(() => {
-    apiGet({ action: "getCoaches" })
-      .then(setCoaches)
-      .catch(() => showToast("⚠️ 프로 목록 로딩 실패. GAS URL을 확인하세요."));
+    apiGet({ action: "getInitialData" })
+      .then(({ coaches, lessons, pinned }) => {
+        setCoaches(coaches  || []);
+        setAllLessons(lessons || []);
+        setPinnedPost(pinned  || []);
+      })
+      .catch(() => showToast("⚠️ 로딩 실패. GAS URL을 확인하세요."))
+      .finally(() => setInitLoading(false));
   }, []);
 
   const TABS = [
@@ -4265,8 +4263,18 @@ export default function App() {
 
       {/* 화면 */}
       <div style={{ flex: 1, overflowY: "auto", paddingBottom: 62 }}>
-        {tab === "home"  && <HomeScreen  coaches={coaches} selPro={selPro} setSelPro={setSelPro} setTab={setTab} setBookStep={setBookStep} setDetailPro={setDetailPro} />}
-        {tab === "book"  && <BookScreen  coaches={coaches} selPro={selPro} setSelPro={setSelPro} setDetailPro={setDetailPro} showToast={showToast} setTab={setTab} />}
+        {initLoading && (
+          <div style={{
+            position:"fixed", inset:0, background:"var(--bg)",
+            display:"flex", flexDirection:"column",
+            alignItems:"center", justifyContent:"center", zIndex:999,
+          }}>
+            <div style={{ fontSize:36, marginBottom:14 }}>⛳</div>
+            <div style={{ fontSize:13, color:"var(--text2)" }}>불러오는 중...</div>
+          </div>
+        )}
+        {tab === "home"  && <HomeScreen  coaches={coaches} pinned={pinnedPost} selPro={selPro} setSelPro={setSelPro} setTab={setTab} setBookStep={setBookStep} setDetailPro={setDetailPro} />}
+        {tab === "book"  && <BookScreen  coaches={coaches} allLessons={allLessons} selPro={selPro} setSelPro={setSelPro} setDetailPro={setDetailPro} showToast={showToast} setTab={setTab} />}
         {tab === "my"    && <MyScreen    showToast={showToast} theme={theme} setTheme={setTheme} />}
         {tab === "board" && <BoardScreen coaches={coaches} myPhone="" adminPw={globalAdminPw} showToast={showToast} />}
         {tab === "admin" && <AdminScreen coaches={coaches} setCoaches={setCoaches} showToast={showToast} onLogin={setGlobalAdminPw} theme={theme} setTheme={setTheme} />}
