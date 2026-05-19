@@ -664,9 +664,34 @@ function BookScreen({ coaches, selPro, setSelPro, setDetailPro, showToast, setTa
 //  마이페이지 (독립 컴포넌트)
 // ─────────────────────────────────────────────
 function MyScreen({ showToast }) {
-  const [rawPhone, setRawPhone] = useState("");
-  const [authPhone, setAuthPhone] = useState("");
-  const [myTab, setMyTab] = useState("booking");
+  const [rawPhone, setRawPhone]     = useState("");
+  const [authPhone, setAuthPhone]   = useState("");
+  const [myTab, setMyTab]           = useState("booking");
+  const [pendingRatings, setPendingRatings] = useState([]);
+  const [ratingTarget, setRatingTarget]     = useState(null);
+
+  // 미평가 레슨 폴링 — 30초마다 자동 확인 (출석완료 즉시 감지용)
+  const checkPending = useCallback(async (phone) => {
+    if (!phone) return;
+    try {
+      const pending = await apiGet({ action: "getMyPendingRatings", phone });
+      if (pending && pending.length > 0) {
+        setPendingRatings(pending);
+        // 아직 팝업 안 열었으면 자동으로 첫 번째 팝업 표시
+        setRatingTarget(prev => prev ? prev : pending[0]);
+      } else {
+        setPendingRatings([]);
+      }
+    } catch(e) {}
+  }, []);
+
+  // 로그인 후 즉시 + 30초마다 폴링
+  useEffect(() => {
+    if (!authPhone) return;
+    checkPending(authPhone);
+    const t = setInterval(() => checkPending(authPhone), 30000);
+    return () => clearInterval(t);
+  }, [authPhone, checkPending]);
 
   const MY_TABS = [
     { id: "booking", label: "📋 예약"   },
@@ -688,7 +713,10 @@ function MyScreen({ showToast }) {
           onKeyDown={e => e.key === "Enter" && rawPhone.length >= 10 && setAuthPhone(rawPhone)}
           style={{ ...INP, marginBottom: 10, textAlign: "center" }}
         />
-        <Btn onClick={() => rawPhone.length >= 10 ? setAuthPhone(rawPhone) : showToast("연락처를 올바르게 입력해주세요.")}>
+        <Btn onClick={async () => {
+          if (rawPhone.length < 10) { showToast("연락처를 올바르게 입력해주세요."); return; }
+          setAuthPhone(rawPhone); // checkPending은 authPhone 변경 useEffect에서 자동 실행
+        }}>
           확인
         </Btn>
       </div>
@@ -697,6 +725,41 @@ function MyScreen({ showToast }) {
 
   return (
     <div style={{ padding: "12px 14px" }}>
+      {/* 별점 팝업 */}
+      {ratingTarget && (
+        <RatingPopup
+          target={ratingTarget}
+          phone={authPhone}
+          onSubmit={async (star, comment) => {
+            try {
+              await apiPost({ action:"submitRating", bookingId:ratingTarget.bookingId, phone:authPhone, star, comment });
+              showToast("⭐ 별점 감사합니다!");
+              setRatingTarget(null);
+              setPendingRatings(prev => prev.filter(p => p.bookingId !== ratingTarget.bookingId));
+            } catch(e) { showToast("❌ " + e.message); }
+          }}
+          onClose={() => setRatingTarget(null)}
+        />
+      )}
+      {/* 미평가 레슨 알림 배너 */}
+      {pendingRatings.length > 0 && !ratingTarget && (
+        <div onClick={() => setRatingTarget(pendingRatings[0])}
+          style={{
+            background:"linear-gradient(135deg,rgba(251,191,36,.12),rgba(245,158,11,.06))",
+            border:"1px solid rgba(251,191,36,.35)", borderRadius:10,
+            padding:"10px 14px", marginBottom:10, cursor:"pointer",
+            display:"flex", alignItems:"center", gap:10,
+          }}>
+          <span style={{ fontSize:22 }}>⭐</span>
+          <div style={{ flex:1 }}>
+            <div style={{ fontSize:12, fontWeight:700, color:"#fbbf24" }}>레슨 평가를 남겨주세요!</div>
+            <div style={{ fontSize:10, color:"#94a3b8", marginTop:2 }}>
+              {pendingRatings[0].coachName} · {pendingRatings[0].lessonDate} {pendingRatings[0].lessonType}
+            </div>
+          </div>
+          <div style={{ fontSize:11, color:"#fbbf24", fontWeight:700 }}>평가하기 →</div>
+        </div>
+      )}
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12 }}>
         <div style={{ fontSize: 12, color: "#94a3b8" }}>📱 {authPhone}</div>
         <button onClick={() => { setAuthPhone(""); setRawPhone(""); }}
@@ -720,6 +783,115 @@ function MyScreen({ showToast }) {
       {myTab === "log"     && <MyLogTab     phone={authPhone} />}
       {myTab === "swing"   && <MySwingTab   phone={authPhone} />}
       {myTab === "setting" && <MySettingTab phone={authPhone} showToast={showToast} />}
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────
+//  별점 팝업 컴포넌트
+// ─────────────────────────────────────────────
+function RatingPopup({ target, phone, onSubmit, onClose }) {
+  const [star, setStar]       = useState(0);
+  const [hover, setHover]     = useState(0);
+  const [comment, setComment] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+
+  const LABELS = ["", "별로예요", "그저 그래요", "괜찮아요", "좋았어요", "최고예요!"];
+  const COLORS = ["", "#f87171", "#fbbf24", "#fbbf24", "#34d399", "#34d399"];
+
+  const doSubmit = async () => {
+    if (!star) { return; }
+    setSubmitting(true);
+    try {
+      await onSubmit(star, comment);
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  return (
+    <div style={{
+      position:"fixed", inset:0, background:"rgba(0,0,0,.8)",
+      zIndex:2000, display:"flex", alignItems:"flex-end", justifyContent:"center",
+    }} onClick={onClose}>
+      <div onClick={e => e.stopPropagation()} style={{
+        background:"#12151c", borderRadius:"20px 20px 0 0",
+        width:"100%", maxWidth:480, padding:24,
+        border:"1px solid #2d3347",
+      }}>
+        {/* 헤더 */}
+        <div style={{ textAlign:"center", marginBottom:16 }}>
+          <div style={{ fontSize:32, marginBottom:6 }}>⭐</div>
+          <div style={{ fontSize:15, fontWeight:900, marginBottom:4 }}>레슨 어떠셨나요?</div>
+          <div style={{ fontSize:11, color:"#94a3b8" }}>
+            {target.coachName} · {target.lessonDate} · {target.lessonType}
+          </div>
+        </div>
+
+        {/* 별점 선택 */}
+        <div style={{ display:"flex", justifyContent:"center", gap:8, marginBottom:6 }}>
+          {[1,2,3,4,5].map(s => (
+            <div key={s}
+              onClick={() => setStar(s)}
+              onMouseEnter={() => setHover(s)}
+              onMouseLeave={() => setHover(0)}
+              style={{
+                fontSize:36, cursor:"pointer",
+                transition:"transform .1s",
+                transform: (hover||star) >= s ? "scale(1.15)" : "scale(1)",
+                filter: (hover||star) >= s ? "none" : "grayscale(1) opacity(.3)",
+              }}>⭐</div>
+          ))}
+        </div>
+
+        {/* 별점 레이블 */}
+        <div style={{
+          textAlign:"center", fontSize:13, fontWeight:700,
+          height:20, marginBottom:16,
+          color: COLORS[hover||star] || "#4b5675",
+          transition:"color .15s",
+        }}>
+          {LABELS[hover||star] || "별점을 선택해주세요"}
+        </div>
+
+        {/* 한 줄 코멘트 */}
+        <div style={{ marginBottom:16 }}>
+          <textarea
+            placeholder="한 줄 코멘트 (선택, 최대 100자)"
+            maxLength={100}
+            value={comment}
+            onChange={e => setComment(e.target.value)}
+            rows={2}
+            style={{
+              ...INP, resize:"none", fontSize:12,
+              lineHeight:1.6,
+            }}
+          />
+          <div style={{ textAlign:"right", fontSize:9, color:"#4b5675", marginTop:2 }}>
+            {comment.length}/100
+          </div>
+        </div>
+
+        {/* 버튼 */}
+        <div style={{ display:"flex", gap:8 }}>
+          <button onClick={onClose} style={{
+            flex:1, padding:"10px 0", borderRadius:9, fontSize:12, cursor:"pointer",
+            background:"#1a1e28", border:"1px solid #2d3347", color:"#94a3b8",
+            fontFamily:"'Noto Sans KR', sans-serif",
+          }}>나중에</button>
+          <button onClick={doSubmit} disabled={!star || submitting} style={{
+            flex:2, padding:"10px 0", borderRadius:9, fontSize:13, fontWeight:700,
+            cursor: !star || submitting ? "not-allowed" : "pointer",
+            background: star ? "#34d399" : "#2d3347",
+            color: star ? "#000" : "#4b5675",
+            border:"none", transition:"all .15s",
+            fontFamily:"'Noto Sans KR', sans-serif",
+            opacity: submitting ? .6 : 1,
+          }}>
+            {submitting ? "제출 중..." : star ? `${star}점으로 평가하기` : "별점을 선택해주세요"}
+          </button>
+        </div>
+      </div>
     </div>
   );
 }
