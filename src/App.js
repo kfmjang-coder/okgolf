@@ -922,13 +922,15 @@ function MyPassTab({ phone }) {
 }
 
 function MyBookingTab({ phone, showToast }) {
-  const [viewMode, setViewMode]   = useState("calendar");   // "calendar" | "list"
+  const [viewMode, setViewMode]   = useState("calendar");   // "calendar" | "list" | "repeat"
   const [bookings, setBookings]   = useState([]);
   const [loading, setLoading]     = useState(true);
   const [calYear, setCalYear]     = useState(new Date().getFullYear());
-  const [calMonth, setCalMonth]   = useState(new Date().getMonth()); // 0~11
-  const [selDate, setSelDate]     = useState("");             // 달력에서 선택한 날짜
-  const [listType, setListType]   = useState("upcoming");    // 리스트뷰 필터
+  const [calMonth, setCalMonth]   = useState(new Date().getMonth());
+  const [selDate, setSelDate]     = useState("");
+  const [listType, setListType]   = useState("upcoming");
+  const [repeats, setRepeats]     = useState([]);
+  const [repeatLoading, setRepeatLoading] = useState(false);
 
   // 전체 예약 로드 (달력뷰는 전체 필요)
   useEffect(() => {
@@ -1002,8 +1004,18 @@ function MyBookingTab({ phone, showToast }) {
         {[
           { id: "calendar", label: "📅 달력" },
           { id: "list",     label: "📋 목록" },
+          { id: "repeat",   label: "🔁 반복" },
         ].map(v => (
-          <button key={v.id} onClick={() => { setViewMode(v.id); setSelDate(""); }} style={{
+          <button key={v.id} onClick={() => {
+            setViewMode(v.id); setSelDate("");
+            if (v.id === "repeat" && repeats.length === 0) {
+              setRepeatLoading(true);
+              apiGet({ action:"getMyRepeats", phone })
+                .then(r => setRepeats(r||[]))
+                .catch(()=>{})
+                .finally(()=>setRepeatLoading(false));
+            }
+          }} style={{
             flex: 1, padding: "7px 0", borderRadius: 8, fontSize: 12, cursor: "pointer",
             fontWeight: viewMode === v.id ? 700 : 400,
             background: viewMode === v.id ? "#34d399" : "#1a1e28",
@@ -1170,6 +1182,26 @@ function MyBookingTab({ phone, showToast }) {
               ))}
             </div>
           )}
+          {/* ══ 반복 예약 뷰 ══ */}
+          {viewMode === "repeat" && (
+            <RepeatBookingTab
+              phone={phone}
+              repeats={repeats}
+              loading={repeatLoading}
+              showToast={showToast}
+              onCancel={async (repeatId) => {
+                try {
+                  await apiPost({ action:"cancelRepeat", repeatId, phone });
+                  showToast("✅ 반복 예약이 취소되었습니다.");
+                  setRepeatLoading(true);
+                  apiGet({ action:"getMyRepeats", phone })
+                    .then(r => setRepeats(r||[]))
+                    .catch(()=>{})
+                    .finally(()=>setRepeatLoading(false));
+                } catch(e) { showToast("❌ " + e.message); }
+              }}
+            />
+          )}
         </>
       )}
     </div>
@@ -1214,6 +1246,248 @@ function BookingCard({ booking: b, onCancel, canCancel, statusColor }) {
           }}>취소</button>
         )}
       </div>
+    </div>
+  );
+}
+
+// ── 반복 예약 탭 컴포넌트
+function RepeatBookingTab({ phone, repeats, loading, showToast, onCancel }) {
+  const [showForm, setShowForm]   = useState(false);
+  const [coaches, setCoaches]     = useState([]);
+  const [submitting, setSubmitting] = useState(false);
+  // 등록 폼 state
+  const [selCoach, setSelCoach]   = useState("");
+  const [selLesson, setSelLesson] = useState("개인30분");
+  const [selDow, setSelDow]       = useState(1); // 0=일~6=토
+  const [selTime, setSelTime]     = useState("10:00");
+  const [startDate, setStartDate] = useState("");
+  const [endDate, setEndDate]     = useState("");
+  const [myName, setMyName]       = useState("");
+  const [myPhone, setMyPhone]     = useState(phone || "");
+
+  const DOW_KR     = ["일","월","화","수","목","금","토"];
+  const LESSON_TYPES = ["개인30분","개인1시간","그룹1시간","체험30분","주니어45분"];
+  const TIMES      = ["09:00","09:30","10:00","10:30","11:00","11:30","12:00","12:30",
+                      "13:00","13:30","14:00","14:30","15:00","15:30","16:00","16:30",
+                      "17:00","17:30","18:00","18:30","19:00","19:30","20:00","20:30","21:00","21:30"];
+
+  // 폼 열 때 프로 목록 로드
+  const openForm = async () => {
+    setShowForm(true);
+    if (coaches.length === 0) {
+      try {
+        const c = await apiGet({ action:"getCoaches" });
+        setCoaches(c||[]);
+        if (c && c.length > 0) setSelCoach(c[0].id);
+      } catch(e) {}
+    }
+  };
+
+  // 반복 예약 등록
+  const submit = async () => {
+    if (!selCoach || !startDate || !endDate || !myName || !myPhone) {
+      showToast("모든 필수 항목을 입력해주세요."); return;
+    }
+    if (startDate >= endDate) { showToast("종료일은 시작일보다 이후여야 합니다."); return; }
+    setSubmitting(true);
+    try {
+      await apiPost({
+        action: "createRepeat",
+        coachId: selCoach,
+        lessonType: selLesson,
+        dow: selDow,
+        startTime: selTime,
+        startDate, endDate,
+        name: myName,
+        phone: myPhone,
+      });
+      showToast("✅ 반복 예약이 등록되었습니다!");
+      setShowForm(false);
+      // 목록 새로고침
+      window.location.reload();
+    } catch(e) { showToast("❌ " + e.message); }
+    finally { setSubmitting(false); }
+  };
+
+  return (
+    <div>
+      {/* 등록 버튼 */}
+      <button onClick={showForm ? () => setShowForm(false) : openForm} style={{
+        width:"100%", padding:"9px 0", borderRadius:9, fontSize:12, fontWeight:700,
+        cursor:"pointer", marginBottom:14,
+        background: showForm ? "#1a1e28" : "rgba(52,211,153,.15)",
+        border: showForm ? "1px solid #2d3347" : "1px solid rgba(52,211,153,.3)",
+        color: showForm ? "#94a3b8" : "#34d399",
+      }}>
+        {showForm ? "✕ 닫기" : "🔁 반복 예약 등록"}
+      </button>
+
+      {/* 등록 폼 */}
+      {showForm && (
+        <div style={{
+          background:"#181c25", border:"1px solid rgba(52,211,153,.2)",
+          borderRadius:12, padding:14, marginBottom:14,
+        }}>
+          <div style={{ fontSize:12, fontWeight:700, color:"#34d399", marginBottom:12 }}>
+            🔁 반복 예약 설정
+          </div>
+
+          {/* 이름·연락처 */}
+          <div style={{ display:"flex", gap:6, marginBottom:8 }}>
+            <div style={{ flex:1 }}>
+              <div style={{ fontSize:9, color:"#4b5675", marginBottom:3 }}>이름 *</div>
+              <input value={myName} onChange={e=>setMyName(e.target.value)}
+                placeholder="이름" style={{ ...INP, fontSize:11 }} />
+            </div>
+            <div style={{ flex:1 }}>
+              <div style={{ fontSize:9, color:"#4b5675", marginBottom:3 }}>연락처 *</div>
+              <input value={myPhone} onChange={e=>setMyPhone(e.target.value)}
+                placeholder="010-0000-0000" style={{ ...INP, fontSize:11 }} />
+            </div>
+          </div>
+
+          {/* 프로 선택 */}
+          <div style={{ marginBottom:8 }}>
+            <div style={{ fontSize:9, color:"#4b5675", marginBottom:4 }}>프로 선택 *</div>
+            <div style={{ display:"flex", flexWrap:"wrap", gap:4 }}>
+              {coaches.map(c => (
+                <button key={c.id} onClick={() => setSelCoach(c.id)} style={{
+                  padding:"5px 10px", borderRadius:6, fontSize:10, cursor:"pointer",
+                  fontWeight: selCoach===c.id ? 700 : 400,
+                  background: selCoach===c.id ? (c.color||"#34d399") : "#1a1e28",
+                  color: selCoach===c.id ? "#000" : "#94a3b8",
+                  border: selCoach===c.id ? "none" : "1px solid #2d3347",
+                }}>{c.name}</button>
+              ))}
+            </div>
+          </div>
+
+          {/* 레슨 종류 */}
+          <div style={{ marginBottom:8 }}>
+            <div style={{ fontSize:9, color:"#4b5675", marginBottom:4 }}>레슨 종류 *</div>
+            <div style={{ display:"flex", flexWrap:"wrap", gap:4 }}>
+              {LESSON_TYPES.map(t => (
+                <button key={t} onClick={() => setSelLesson(t)} style={{
+                  padding:"4px 8px", borderRadius:5, fontSize:10, cursor:"pointer",
+                  fontWeight: selLesson===t ? 700 : 400,
+                  background: selLesson===t ? "#34d399" : "#1a1e28",
+                  color: selLesson===t ? "#000" : "#94a3b8",
+                  border: selLesson===t ? "none" : "1px solid #2d3347",
+                }}>{t}</button>
+              ))}
+            </div>
+          </div>
+
+          {/* 요일 선택 */}
+          <div style={{ marginBottom:8 }}>
+            <div style={{ fontSize:9, color:"#4b5675", marginBottom:4 }}>매주 반복 요일 *</div>
+            <div style={{ display:"flex", gap:4 }}>
+              {DOW_KR.map((d,i) => (
+                <button key={i} onClick={() => setSelDow(i)} style={{
+                  flex:1, padding:"6px 0", borderRadius:6, fontSize:11, cursor:"pointer",
+                  fontWeight: selDow===i ? 700 : 400,
+                  background: selDow===i ? "#34d399" : "#1a1e28",
+                  color: selDow===i ? "#000" : i===0?"#f87171":i===6?"#38bdf8":"#94a3b8",
+                  border: selDow===i ? "none" : "1px solid #2d3347",
+                }}>{d}</button>
+              ))}
+            </div>
+          </div>
+
+          {/* 시간 선택 */}
+          <div style={{ marginBottom:8 }}>
+            <div style={{ fontSize:9, color:"#4b5675", marginBottom:4 }}>시작 시간 *</div>
+            <div style={{ display:"grid", gridTemplateColumns:"repeat(4,1fr)", gap:3 }}>
+              {TIMES.map(t => (
+                <button key={t} onClick={() => setSelTime(t)} style={{
+                  padding:"5px 2px", borderRadius:5, fontSize:10, cursor:"pointer", textAlign:"center",
+                  fontWeight: selTime===t ? 700 : 400,
+                  background: selTime===t ? "#34d399" : "#1a1e28",
+                  color: selTime===t ? "#000" : "#94a3b8",
+                  border: selTime===t ? "none" : "1px solid #2d3347",
+                  fontFamily:"monospace",
+                }}>{t}</button>
+              ))}
+            </div>
+          </div>
+
+          {/* 시작일 ~ 종료일 */}
+          <div style={{ display:"flex", gap:6, marginBottom:12 }}>
+            <div style={{ flex:1 }}>
+              <div style={{ fontSize:9, color:"#4b5675", marginBottom:3 }}>시작일 *</div>
+              <input type="date" value={startDate} onChange={e=>setStartDate(e.target.value)}
+                style={{ ...INP, fontSize:11 }} />
+            </div>
+            <div style={{ flex:1 }}>
+              <div style={{ fontSize:9, color:"#4b5675", marginBottom:3 }}>종료일 *</div>
+              <input type="date" value={endDate} onChange={e=>setEndDate(e.target.value)}
+                style={{ ...INP, fontSize:11 }} />
+            </div>
+          </div>
+
+          {/* 요약 미리보기 */}
+          {selCoach && startDate && endDate && (
+            <div style={{
+              background:"rgba(52,211,153,.07)", border:"1px solid rgba(52,211,153,.2)",
+              borderRadius:8, padding:"8px 12px", marginBottom:12, fontSize:11,
+            }}>
+              <div style={{ color:"#34d399", fontWeight:700, marginBottom:4 }}>📋 설정 요약</div>
+              <div style={{ color:"#94a3b8", lineHeight:1.8 }}>
+                매주 <b style={{color:"#e2e8f0"}}>{DOW_KR[selDow]}요일 {selTime}</b><br/>
+                {coaches.find(c=>c.id===selCoach)?.name} · {selLesson}<br/>
+                {startDate} ~ {endDate}
+              </div>
+            </div>
+          )}
+
+          <button onClick={submit} disabled={submitting} style={{
+            width:"100%", padding:"10px 0", borderRadius:9, fontSize:13, fontWeight:700,
+            cursor: submitting ? "not-allowed" : "pointer",
+            background:"#34d399", border:"none", color:"#000",
+            opacity: submitting ? .6 : 1,
+            fontFamily:"'Noto Sans KR', sans-serif",
+          }}>{submitting ? "등록 중..." : "✅ 반복 예약 등록"}</button>
+        </div>
+      )}
+
+      {/* 반복 예약 목록 */}
+      {loading ? <Spinner /> : repeats.length === 0 ? (
+        <div style={{ textAlign:"center", color:"#4b5675", fontSize:12, padding:"30px 0" }}>
+          등록된 반복 예약이 없습니다.<br/>
+          <span style={{ fontSize:11, color:"#2d3347" }}>위 버튼으로 등록해보세요.</span>
+        </div>
+      ) : repeats.map(r => (
+        <div key={r["반복ID"]} style={{
+          background:"#181c25", border:"1px solid #2d3347",
+          borderLeft:"3px solid #34d399",
+          borderRadius:10, padding:"11px 13px", marginBottom:8,
+          display:"flex", alignItems:"center", gap:10,
+        }}>
+          <div style={{ fontSize:24 }}>🔁</div>
+          <div style={{ flex:1 }}>
+            <div style={{ fontSize:12, fontWeight:700, marginBottom:3 }}>
+              {r["프로명"]} · {r["레슨종류"]}
+            </div>
+            <div style={{ fontSize:11, color:"#34d399", fontWeight:700, marginBottom:2 }}>
+              매주 {r["요일명"]}요일 {String(r["시작시간"]||"").slice(0,5)}
+            </div>
+            <div style={{ fontSize:10, color:"#4b5675" }}>
+              {String(r["시작일"]||"").slice(0,10)} ~ {String(r["종료일"]||"").slice(0,10)}
+            </div>
+            {r["마지막생성일"] && (
+              <div style={{ fontSize:9, color:"#2d3347", marginTop:2 }}>
+                마지막 생성: {String(r["마지막생성일"]).slice(0,10)}
+              </div>
+            )}
+          </div>
+          <button onClick={() => {
+            if (window.confirm("반복 예약을 취소할까요?")) onCancel(r["반복ID"]);
+          }} style={{
+            padding:"5px 10px", borderRadius:6, fontSize:10, cursor:"pointer", flexShrink:0,
+            background:"rgba(248,113,113,.12)", border:"1px solid rgba(248,113,113,.3)", color:"#f87171",
+          }}>취소</button>
+        </div>
+      ))}
     </div>
   );
 }
