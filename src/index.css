@@ -1,7 +1,61 @@
+/* ── OK골프 레슨 앱 전역 스타일 ── */
+
+/* 다크 테마 (기본) */
+:root,
+[data-theme="dark"] {
+  --bg:      #08090d;
+  --bg2:     #0d0f14;
+  --bg3:     #181c25;
+  --bg4:     #1a1e28;
+  --card:    #181c25;
+  --border:  #2d3347;
+  --border2: #1f2435;
+  --text:    #e2e8f0;
+  --text2:   #94a3b8;
+  --text3:   #4b5675;
+  --green:   #34d399;
+  --blue:    #38bdf8;
+  --yellow:  #fbbf24;
+  --red:     #f87171;
+  --purple:  #a78bfa;
+  --tabbar:  rgba(13,15,20,.97);
+  --appbar:  #0d0f14;
+  --inp-bg:  #1a1e28;
+}
+
+/* 라이트 테마 */
+[data-theme="light"] {
+  --bg:      #f0f4f8;
+  --bg2:     #e8edf5;
+  --bg3:     #ffffff;
+  --bg4:     #f8fafc;
+  --card:    #ffffff;
+  --border:  #cbd5e1;
+  --border2: #e2e8f0;
+  --text:    #1a202c;
+  --text2:   #4a5568;
+  --text3:   #94a3b8;
+  --green:   #059669;
+  --blue:    #0284c7;
+  --yellow:  #d97706;
+  --red:     #dc2626;
+  --purple:  #7c3aed;
+  --tabbar:  rgba(248,250,252,.97);
+  --appbar:  #ffffff;
+  --inp-bg:  #f8fafc;
+}
+
 * { box-sizing: border-box; margin: 0; padding: 0; }
+
 body {
-  background: #08090d;
-  color: #e2e8f0;
+  background: var(--bg);
+  color: var(--text);
   font-family: 'Noto Sans KR', sans-serif;
   -webkit-font-smoothing: antialiased;
+  transition: background .25s, color .25s;
 }
+
+/* 스크롤바 */
+::-webkit-scrollbar { width: 4px; height: 4px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }

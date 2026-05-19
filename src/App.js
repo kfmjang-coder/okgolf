@@ -70,8 +70,8 @@ function safeArr(val) {
 //  스타일 상수
 // ─────────────────────────────────────────────
 const INP = {
-  width: "100%", background: "#1a1e28", border: "1px solid #2d3347",
-  borderRadius: 8, padding: "8px 10px", color: "#e2e8f0",
+  width: "100%", background: "var(--inp-bg)", border: "1px solid var(--border)",
+  borderRadius: 8, padding: "8px 10px", color: "var(--text)",
   fontSize: 12, outline: "none", boxSizing: "border-box",
 };
 const LBL = {
@@ -79,7 +79,7 @@ const LBL = {
   textTransform: "uppercase", color: "#4b5675", marginBottom: 6,
 };
 const CARD_STYLE = {
-  background: "#181c25", border: "1px solid #2d3347",
+  background: "var(--card)", border: "1px solid var(--border)",
   borderRadius: 12, padding: "12px 14px",
 };
 
@@ -96,7 +96,7 @@ function Toast({ msg, onClose }) {
   return (
     <div style={{
       position: "fixed", bottom: 80, left: "50%", transform: "translateX(-50%)",
-      background: "#1f2435", border: "1px solid #34d399", color: "#e2e8f0",
+      background: "#1f2435", border: "1px solid #34d399", color: "var(--text)",
       padding: "10px 20px", borderRadius: 10, zIndex: 9999, fontSize: 13,
       boxShadow: "0 4px 20px rgba(0,0,0,.5)", maxWidth: 300, textAlign: "center",
     }}>{msg}</div>
@@ -110,7 +110,7 @@ function Spinner() {
 function Btn({ onClick, children, variant = "primary", style = {}, disabled = false }) {
   const variants = {
     primary:   { background: "#34d399", color: "#000" },
-    secondary: { background: "#1a1e28", border: "1px solid #2d3347", color: "#e2e8f0" },
+    secondary: { background: "var(--inp-bg)", border: "1px solid var(--border)", color: "var(--text)" },
     danger:    { background: "rgba(248,113,113,.15)", border: "1px solid rgba(248,113,113,.3)", color: "#f87171" },
     warning:   { background: "rgba(251,191,36,.1)",  border: "1px solid rgba(251,191,36,.25)", color: "#fbbf24" },
   };
@@ -1172,7 +1172,7 @@ function MyBookingTab({ phone, showToast }) {
                   </div>
                 );
                 return (
-                  <div style={{ marginTop: 14, background: "#181c25", border: "1px solid #2d3347", borderRadius: 10, padding: "12px 14px" }}>
+                  <div style={{ marginTop: 14, background: "var(--card)", border: "1px solid var(--border)", borderRadius: 10, padding: "12px 14px" }}>
                     <div style={{ fontSize: 11, color: "#4b5675", marginBottom: 8 }}>{calYear}년 {calMonth+1}월 요약</div>
                     <div style={{ display: "flex", gap: 14 }}>
                       <div><div style={{ fontSize: 18, fontWeight: 900, color: "#34d399" }}>{upcoming}</div><div style={{ fontSize: 9, color: "#94a3b8" }}>예약</div></div>
@@ -1281,7 +1281,7 @@ function BookingCard({ booking: b, onCancel, canCancel, statusColor }) {
             }}>{b.상태}</span>
             <span style={{ fontSize: 11, fontWeight: 700 }}>{b.프로명}</span>
           </div>
-          <div style={{ fontSize: 12, color: "#e2e8f0", fontWeight: 600, marginBottom: 2 }}>
+          <div style={{ fontSize: 12, color: "var(--text)", fontWeight: 600, marginBottom: 2 }}>
             {b.레슨종류}
           </div>
           <div style={{ fontSize: 11, color: "#94a3b8" }}>
@@ -1633,7 +1633,7 @@ function MySwingTab({ phone }) {
       </div>
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
         {archive.map((item, i) => (
-          <div key={i} style={{ background: "#181c25", border: "1px solid #2d3347", borderRadius: 10, overflow: "hidden" }}>
+          <div key={i} style={{ background: "var(--card)", border: "1px solid var(--border)", borderRadius: 10, overflow: "hidden" }}>
             <div style={{ height: 64, background: "rgba(0,0,0,.5)", display: "flex", alignItems: "center", justifyContent: "center", position: "relative" }}>
               <span style={{ fontSize: 22 }}>▶️</span>
               <div style={{ position: "absolute", bottom: 4, left: 6, fontSize: 9, color: "rgba(255,255,255,.6)", background: "rgba(0,0,0,.4)", padding: "1px 4px", borderRadius: 3 }}>
@@ -2002,7 +2002,7 @@ function PostDetail({ post, phone, coaches, adminPw, onBack, showToast }) {
               👍 {data.좋아요수 || 0} {full?.likedByMe ? "(내가 좋아요)" : ""}
             </button>
           </div>
-          <div style={{ borderTop: "1px solid #1f2435", paddingTop: 12 }}>
+          <div style={{ borderTop: "1px solid var(--border2)", paddingTop: 12 }}>
             <CommentSection postId={post.게시글ID} phone={phone} coaches={coaches} adminPw={adminPw} />
           </div>
         </>
@@ -2579,7 +2579,7 @@ function AdminTimeline({ coaches, adminPw, showToast }) {
   );
 }
 
-function AdminScreen({ coaches, setCoaches, showToast, onLogin }) {
+function AdminScreen({ coaches, setCoaches, showToast, onLogin, theme, setTheme }) {
   const [pw, setPw]             = useState("");
   const [adminPw, setAdminPw]   = useState("");
   const [adminTab, setAdminTab] = useState("dash"); // 항상 dash로 시작
@@ -2675,6 +2675,7 @@ function AdminScreen({ coaches, setCoaches, showToast, onLogin }) {
         { id:"pro",      label:"🏌️ 프로"    },
         { id:"lessons",  label:"📚 레슨종류" },
         { id:"block",    label:"🚫 차단"     },
+        { id:"theme",    label:"🎨 테마"     },
         { id:"report",   label:"🚨 신고"     },
       ]
     : [
@@ -2684,6 +2685,7 @@ function AdminScreen({ coaches, setCoaches, showToast, onLogin }) {
         { id:"pro",      label:"🏌️ 프로"},
         { id:"lessons",  label:"📚 레슨" },
         { id:"block",    label:"🚫 차단" },
+        { id:"theme",    label:"🎨 테마" },
         { id:"report",   label:"🚨 신고" },
       ];
 
@@ -2721,6 +2723,7 @@ function AdminScreen({ coaches, setCoaches, showToast, onLogin }) {
       {adminTab === "report"   && <AdminReportTab list={reports} adminPw={adminPw} showToast={showToast} onDone={() => loadData(adminPw, "report")} />}
       {adminTab === "students" && <AdminStudentTab adminPw={adminPw} showToast={showToast} />}
       {adminTab === "lessons"  && <AdminLessonTab adminPw={adminPw} showToast={showToast} />}
+      {adminTab === "theme"    && <AdminThemeTab theme={theme} setTheme={setTheme} />}
       {adminTab === "block"    && <AdminBlockTab coaches={coaches} adminPw={adminPw} showToast={showToast} />}
     </div>
   );
@@ -3735,6 +3738,107 @@ function AdminLessonTab({ adminPw, showToast }) {
   );
 }
 
+// ─────────────────────────────────────────────
+//  🎨 테마 설정 탭
+// ─────────────────────────────────────────────
+function AdminThemeTab({ theme, setTheme }) {
+  const THEMES = [
+    {
+      id: "dark",
+      label: "🌙 다크 모드",
+      desc: "어두운 배경, 눈의 피로 감소",
+      preview: { bg:"#08090d", card:"#181c25", text:"#e2e8f0", accent:"#34d399" },
+    },
+    {
+      id: "light",
+      label: "☀️ 라이트 모드",
+      desc: "밝은 배경, 낮 환경에 적합",
+      preview: { bg:"#f0f4f8", card:"#ffffff", text:"#1a202c", accent:"#059669" },
+    },
+    {
+      id: "system",
+      label: "⚙️ 시스템 설정",
+      desc: "기기의 다크/라이트 모드 자동 따름",
+      preview: { bg:"linear-gradient(135deg,#08090d 50%,#f0f4f8 50%)", card:"#2d3347", text:"#e2e8f0", accent:"#34d399" },
+    },
+  ];
+
+  return (
+    <div>
+      <div style={{ fontSize:13, fontWeight:700, marginBottom:4 }}>🎨 앱 테마 설정</div>
+      <div style={{ fontSize:11, color:"#4b5675", marginBottom:16 }}>
+        선택한 테마가 앱 전체에 즉시 적용됩니다.
+      </div>
+
+      {THEMES.map(t => {
+        const isSel = theme === t.id;
+        return (
+          <div key={t.id} onClick={() => setTheme(t.id)} style={{
+            background: isSel ? "rgba(52,211,153,.08)" : "var(--card)",
+            border: `1.5px solid ${isSel ? "#34d399" : "var(--border)"}`,
+            borderRadius: 12, padding: "14px 16px", marginBottom: 10,
+            cursor: "pointer", transition: "all .15s",
+            display: "flex", alignItems: "center", gap: 14,
+          }}>
+            {/* 미리보기 */}
+            <div style={{
+              width: 56, height: 40, borderRadius: 8, overflow: "hidden",
+              background: t.preview.bg, flexShrink: 0,
+              border: "1px solid rgba(255,255,255,.1)",
+              position: "relative", display: "flex",
+              alignItems: "center", justifyContent: "center",
+            }}>
+              <div style={{
+                width: 36, height: 24, borderRadius: 5,
+                background: t.preview.card,
+                display: "flex", flexDirection: "column",
+                gap: 3, padding: "4px 5px",
+              }}>
+                <div style={{ height: 3, borderRadius: 2, background: t.preview.accent, width: "60%" }}/>
+                <div style={{ height: 2, borderRadius: 2, background: t.preview.text, opacity:.4, width: "80%" }}/>
+                <div style={{ height: 2, borderRadius: 2, background: t.preview.text, opacity:.3, width: "50%" }}/>
+              </div>
+            </div>
+
+            {/* 설명 */}
+            <div style={{ flex: 1 }}>
+              <div style={{ fontSize: 13, fontWeight: 700, marginBottom: 3 }}>{t.label}</div>
+              <div style={{ fontSize: 11, color: "var(--text2)" }}>{t.desc}</div>
+            </div>
+
+            {/* 선택 표시 */}
+            <div style={{
+              width: 20, height: 20, borderRadius: "50%", flexShrink: 0,
+              border: `2px solid ${isSel ? "#34d399" : "var(--border)"}`,
+              background: isSel ? "#34d399" : "transparent",
+              display: "flex", alignItems: "center", justifyContent: "center",
+              fontSize: 10, color: "#000",
+            }}>
+              {isSel ? "✓" : ""}
+            </div>
+          </div>
+        );
+      })}
+
+      {/* 현재 상태 */}
+      <div style={{
+        marginTop: 8, padding: "10px 14px",
+        background: "var(--card)", border: "1px solid var(--border)",
+        borderRadius: 10, fontSize: 11, color: "var(--text2)",
+      }}>
+        현재 적용: <b style={{ color:"#34d399" }}>
+          {THEMES.find(t=>t.id===theme)?.label || theme}
+        </b>
+        {theme === "system" && (
+          <span style={{ marginLeft: 6, color:"var(--text3)" }}>
+            → 현재 {window.matchMedia("(prefers-color-scheme: light)").matches ? "라이트" : "다크"} 모드 적용 중
+          </span>
+        )}
+      </div>
+    </div>
+  );
+}
+
 function AdminBlockTab({ coaches, adminPw, showToast }) {
   const DOW_KR = ["일","월","화","수","목","금","토"];
 
@@ -4048,7 +4152,7 @@ function AdminReportTab({ list, adminPw, showToast, onDone }) {
       <div style={{ fontSize: 10, color: "#94a3b8", marginBottom: 6 }}>사유: {r.신고사유} · {r.신고일시?.slice(0, 10)}</div>
       <div style={{ display: "flex", gap: 6 }}>
         <button onClick={() => blind(r.대상타입, r.대상ID)} style={{ padding: "4px 10px", borderRadius: 6, background: "rgba(248,113,113,.2)", border: "1px solid rgba(248,113,113,.3)", color: "#f87171", fontSize: 10, cursor: "pointer" }}>🚫 블라인드</button>
-        <button onClick={() => dismiss(r.신고ID)} style={{ padding: "4px 10px", borderRadius: 6, background: "#1a1e28", border: "1px solid #2d3347", color: "#94a3b8", fontSize: 10, cursor: "pointer" }}>기각</button>
+        <button onClick={() => dismiss(r.신고ID)} style={{ padding: "4px 10px", borderRadius: 6, background: "var(--inp-bg)", border: "1px solid var(--border)", color: "#94a3b8", fontSize: 10, cursor: "pointer" }}>기각</button>
       </div>
     </div>
   ));
@@ -4064,7 +4168,35 @@ export default function App() {
   const [selPro, setSelPro]       = useState(null);
   const [bookStep, setBookStep]   = useState(1);
   const [detailPro, setDetailPro] = useState(null);
-  const [globalAdminPw, setGlobalAdminPw] = useState(""); // 관리자 로그인 시 공유
+  const [globalAdminPw, setGlobalAdminPw] = useState("");
+
+  // ── 테마 관리 (dark | light | system)
+  const [theme, setTheme] = useState(() =>
+    localStorage.getItem("okgolf_theme") || "dark"
+  );
+
+  // 테마 변경 시 <html>에 data-theme 적용
+  useEffect(() => {
+    const resolveTheme = (t) => {
+      if (t === "system") {
+        return window.matchMedia("(prefers-color-scheme: light)").matches ? "light" : "dark";
+      }
+      return t;
+    };
+    const apply = (t) => {
+      document.documentElement.setAttribute("data-theme", resolveTheme(t));
+    };
+    apply(theme);
+    localStorage.setItem("okgolf_theme", theme);
+
+    // system 모드일 때 OS 변경 감지
+    if (theme === "system") {
+      const mq = window.matchMedia("(prefers-color-scheme: light)");
+      const handler = () => apply("system");
+      mq.addEventListener("change", handler);
+      return () => mq.removeEventListener("change", handler);
+    }
+  }, [theme]);
 
   const showToast = useCallback(msg => setToast(msg), []);
 
@@ -4084,13 +4216,13 @@ export default function App() {
 
   return (
     <div style={{
-      background: "#08090d", color: "#e2e8f0", minHeight: "100vh",
+      background: "var(--bg)", color: "var(--text)", minHeight: "100vh",
       fontFamily: "'Noto Sans KR', sans-serif", maxWidth: 480, margin: "0 auto",
       display: "flex", flexDirection: "column",
     }}>
       {/* 앱바 */}
       <div style={{
-        background: "#0d0f14", borderBottom: "1px solid #1f2435",
+        background: "var(--appbar)", borderBottom: "1px solid var(--border2)",
         padding: "14px 16px", display: "flex", alignItems: "center", justifyContent: "space-between",
         position: "sticky", top: 0, zIndex: 100,
       }}>
@@ -4104,14 +4236,14 @@ export default function App() {
         {tab === "book"  && <BookScreen  coaches={coaches} selPro={selPro} setSelPro={setSelPro} setDetailPro={setDetailPro} showToast={showToast} setTab={setTab} />}
         {tab === "my"    && <MyScreen    showToast={showToast} />}
         {tab === "board" && <BoardScreen coaches={coaches} myPhone="" adminPw={globalAdminPw} showToast={showToast} />}
-        {tab === "admin" && <AdminScreen coaches={coaches} setCoaches={setCoaches} showToast={showToast} onLogin={setGlobalAdminPw} />}
+        {tab === "admin" && <AdminScreen coaches={coaches} setCoaches={setCoaches} showToast={showToast} onLogin={setGlobalAdminPw} theme={theme} setTheme={setTheme} />}
       </div>
 
       {/* 탭바 */}
       <div style={{
         position: "fixed", bottom: 0, left: "50%", transform: "translateX(-50%)",
-        width: "100%", maxWidth: 480, background: "rgba(13,15,20,.97)",
-        borderTop: "1px solid #1f2435", display: "flex", zIndex: 100,
+        width: "100%", maxWidth: 480, background: "var(--tabbar)",
+        borderTop: "1px solid var(--border2)", display: "flex", zIndex: 100,
       }}>
         {TABS.map(t => (
           <div key={t.id} onClick={() => setTab(t.id)} style={{
